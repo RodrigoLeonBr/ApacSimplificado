@@ -115,5 +115,5 @@ CREATE TRIGGER update_prestadores_updated_at BEFORE UPDATE ON prestadores
 
 -- Inserir usuário admin padrão (senha: admin123)
 INSERT INTO usuarios (email, password, nome, role, ativo)
-VALUES ('admin@apac.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrador', 'admin', TRUE)
+VALUES ('admin@apac.com', '$2y$10$7npeS2HCEomoFaF8MZQAt..p8gbKZJakM8IGyRd12.e01rxZkC4se', 'Administrador', 'admin', TRUE)
 ON CONFLICT (email) DO NOTHING;
