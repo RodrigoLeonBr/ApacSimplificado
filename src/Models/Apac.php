@@ -51,12 +51,14 @@ class Apac
         $sql = "INSERT INTO {$this->table} (numero_14dig, digito_verificador, faixa_id, emitido_por_usuario_id, impresso) 
                 VALUES (:numero_14dig, :digito_verificador, :faixa_id, :emitido_por_usuario_id, :impresso)";
         
+        $impresso = isset($data['impresso']) ? ($data['impresso'] ? 'true' : 'false') : 'false';
+        
         $params = [
             'numero_14dig' => $data['numero_14dig'],
             'digito_verificador' => $data['digito_verificador'],
             'faixa_id' => $data['faixa_id'],
             'emitido_por_usuario_id' => $data['emitido_por_usuario_id'] ?? null,
-            'impresso' => $data['impresso'] ?? false
+            'impresso' => $impresso
         ];
         
         $this->db->execute($sql, $params);
@@ -70,7 +72,12 @@ class Apac
         
         foreach ($data as $key => $value) {
             $fields[] = "{$key} = :{$key}";
-            $params[$key] = $value;
+            
+            if ($key === 'impresso' && is_bool($value)) {
+                $params[$key] = $value ? 'true' : 'false';
+            } else {
+                $params[$key] = $value;
+            }
         }
         
         $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";

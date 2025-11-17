@@ -37,12 +37,14 @@ class Usuario
         $sql = "INSERT INTO {$this->table} (email, password, nome, role, ativo) 
                 VALUES (:email, :password, :nome, :role, :ativo)";
         
+        $ativo = isset($data['ativo']) ? ($data['ativo'] ? 'true' : 'false') : 'true';
+        
         $params = [
             'email' => $data['email'],
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'nome' => $data['nome'],
             'role' => $data['role'] ?? 'user',
-            'ativo' => $data['ativo'] ?? true
+            'ativo' => $ativo
         ];
         
         $this->db->execute($sql, $params);
@@ -60,7 +62,12 @@ class Usuario
                 $params['password'] = password_hash($value, PASSWORD_BCRYPT);
             } else {
                 $fields[] = "{$key} = :{$key}";
-                $params[$key] = $value;
+                
+                if ($key === 'ativo' && is_bool($value)) {
+                    $params[$key] = $value ? 'true' : 'false';
+                } else {
+                    $params[$key] = $value;
+                }
             }
         }
         
