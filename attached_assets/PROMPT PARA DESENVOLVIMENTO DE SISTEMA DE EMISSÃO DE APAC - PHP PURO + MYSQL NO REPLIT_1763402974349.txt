@@ -1,0 +1,1989 @@
+PROMPT PARA DESENVOLVIMENTO DE SISTEMA DE EMISSÃO DE APAC - PHP PURO + MYSQL NO REPLIT
+
+SEÇÃO 1: VISÃO GERAL E CONTEXTO
+
+Este documento serve como um guia detalhado para o desenvolvimento de um sistema simples de emissão de APAC magnético. A abordagem será focada em PHP puro, sem o uso de frameworks complexos como Laravel ou Symfony, visando simplicidade, controle total sobre o código e facilidade de prototipagem rápida. O ambiente de desenvolvimento será o Replit.com, aproveitando sua capacidade de "vibe coding" e colaboração. O banco de dados utilizado será MySQL 8.0+, conectado via PDO.
+
+Objetivo: Desenvolver um sistema funcional para cadastro, controle e emissão de APACs, com foco na geração correta do dígito verificador e na rastreabilidade.
+Abordagem: PHP puro (sem frameworks), com foco em modularidade e boas práticas de código.
+Ambiente: Replit.com, utilizando o terminal e editor integrados.
+Banco de Dados: MySQL 8.0+ (conexão remota ou local configurada no Replit).
+
+SEÇÃO 2: ARQUITETURA MINIMALISTA (PHP PURO)
+
+A arquitetura do sistema seguirá um padrão MVC (Model-View-Controller) simplificado, adaptado para PHP puro, com uma clara separação de responsabilidades em 5 camadas:
+
+1.  Camada de Apresentação (HTML/CSS): Responsável pela interface do usuário. Utilizará HTML para a estrutura e Tailwind CSS (via CDN) para estilização, garantindo uma aparência moderna e responsiva sem a necessidade de um processo de build complexo. Alpine.js (via CDN) será usado para interatividade leve no frontend.
+2.  Camada de Roteamento (router.php): O ponto de entrada da aplicação (public/index.php) incluirá um arquivo router.php que mapeará URLs para os respectivos métodos de controladores. Esta camada direciona as requisições HTTP para a lógica de controle apropriada.
+3.  Camada de Controle (Controllers/): Contém a lógica que processa as requisições do usuário, interage com a camada de lógica de negócio (Services) e seleciona a view apropriada para renderizar a resposta. Cada controlador será uma classe PHP.
+4.  Camada de Lógica de Negócio (Services/): Encapsula as regras de negócio e a lógica específica da aplicação (ex: cálculo de dígito verificador, regras de emissão de APAC). Esta camada é independente da interface do usuário e do banco de dados, promovendo a reutilização e testabilidade.
+5.  Camada de Dados (Database/, Models/): Responsável pela interação com o banco de dados. A classe Database.php gerenciará a conexão PDO, enquanto os Models representarão as entidades do banco de dados e conterão métodos para operações CRUD básicas.
+
+Princípios:
+*   Separação clara de responsabilidades: Cada componente tem uma única responsabilidade bem definida.
+*   Sem dependências externas complexas: Minimiza a curva de aprendizado e a sobrecarga do projeto.
+*   Fácil de entender e expandir: A estrutura simples facilita a manutenção e a adição de novas funcionalidades.
+
+SEÇÃO 3: STACK TECNOLÓGICO INICIAL
+
+*   Backend: PHP 8.2+ (puro)
+*   Banco de Dados: MySQL 8.0+ (conexão PDO com prepared statements para segurança e performance)
+*   Frontend:
+    *   CSS: Tailwind CSS 3.4+ (via CDN para desenvolvimento rápido e sem build)
+    *   JavaScript: Alpine.js (via CDN para interatividade leve e reativa)
+*   Servidor de Desenvolvimento: PHP Built-in Server (php -S localhost:8000 -t public)
+*   Conexão com BD: PDO (PHP Data Objects) para uma interface consistente e segura com o MySQL.
+
+SEÇÃO 4: FUNCIONALIDADES BÁSICAS (MVP)
+
+As funcionalidades serão priorizadas em três grupos para um desenvolvimento iterativo:
+
+P1 - Semana 1-2 (CRÍTICO - MVP Essencial):
+1.  Autenticação simples: Login e logout de usuários.
+2.  Dashboard básico: Página inicial pós-login com informações resumidas.
+3.  CRUD Faixa de APAC: Cadastrar, visualizar, editar e excluir faixas de números de APAC.
+4.  Validação de Dígito Verificador: Implementar a lógica para validar um número de APAC completo (14 dígitos).
+5.  Visualizar faixas cadastradas: Listagem das faixas de APAC disponíveis.
+6.  Algoritmo DV testado: Garantir que o algoritmo de cálculo e validação do dígito verificador esteja funcionando corretamente.
+
+P2 - Semana 3-4 (IMPORTANTE - Core do Sistema):
+7.  Emissão Individual de APAC: Formulário para emitir uma APAC, gerando o número completo (13 dígitos + DV) e registrando no sistema.
+8.  Controle de impressão (flag): Marcar uma APAC como "impressa" após a emissão.
+9.  Visualizar APACs emitidas: Listagem de todas as APACs que foram emitidas.
+10. Logs de auditoria: Registro de ações importantes (ex: emissão de APAC, alteração de faixa).
+
+P3 - Semana 5-6 (LEGAL - Melhorias e Expansões):
+11. Emissão em lote: Funcionalidade para emitir múltiplas APACs de uma vez, a partir de uma faixa.
+12. Exportar em TXT: Gerar um arquivo de texto com as APACs emitidas em um formato específico.
+13. Relatórios básicos: Relatórios simples sobre o uso das APACs e faixas.
+14. Dashboard com gráficos: Visualização gráfica do uso das APACs (ex: APACs emitidas por período, faixas restantes).
+
+SEÇÃO 5: ESTRUTURA DE PASTAS E ARQUIVOS
+
+A estrutura de pastas e arquivos será organizada para promover a modularidade e a clareza, mesmo em PHP puro.
+
+`
+sistema-apac/
+├── src/
+│   ├── Controllers/
+│   │   ├── AuthController.php      # Lógica de autenticação (login, logout)
+│   │   ├── FaixaController.php     # Lógica para CRUD de faixas de APAC
+│   │   ├── ApacController.php      # Lógica para emissão e visualização de APACs
+│   │   └── DashboardController.php # Lógica para a página inicial pós-login
+│   ├── Models/
+│   │   ├── Usuario.php             # Representa a tabela 'usuarios'
+│   │   ├── Faixa.php               # Representa a tabela 'faixas'
+│   │   └── Apac.php                # Representa a tabela 'apacs'
+│   ├── Services/
+│   │   ├── DigitoVerificadorService.php # Lógica para cálculo e validação do DV
+│   │   ├── AuthService.php              # Lógica de negócio para autenticação
+│   │   ├── EmissaoService.php           # Lógica de negócio para emissão de APACs
+│   │   └── ValidacaoService.php         # Funções de validação genéricas
+│   ├── Database/
+│   │   └── Database.php            # Classe para gerenciar a conexão PDO com MySQL
+│   └── Utils/
+│       ├── Session.php             # Helper para gerenciamento de sessão
+│       ├── Validation.php          # Helper para validações de formulário
+│       └── Router.php              # Classe para roteamento de URLs
+├── views/
+│   ├── layouts/
+│   │   ├── app.php                 # Layout principal da aplicação (com navbar, sidebar, etc.)
+│   │   └── auth.php                # Layout específico para páginas de autenticação
+│   ├── auth/
+│   │   ├── login.php               # View para o formulário de login
+│   │   └── register.php            # View para o formulário de registro (opcional)
+│   ├── dashboard/
+│   │   └── index.php               # View para o dashboard
+│   ├── faixa/
+│   │   ├── index.php               # View para listar faixas
+│   │   ├── create.php              # View para cadastrar nova faixa
+│   │   └── show.php                # View para detalhes/edição de faixa
+│   ├── apac/
+│   │   ├── index.php               # View para listar APACs emitidas
+│   │   ├── create.php              # View para emitir nova APAC
+│   │   └── emitidas.php            # View para listar APACs emitidas (pode ser index.php)
+│   └── components/
+│       ├── navbar.php              # Componente de barra de navegação
+│       ├── sidebar.php             # Componente de barra lateral
+│       └── alerts.php              # Componente para exibir mensagens de alerta/sucesso
+├── public/
+│   ├── index.php                   # Ponto de entrada da aplicação (front controller)
+│   ├── css/
+│   │   └── style.css               # Arquivo para customizações CSS (além do Tailwind)
+│   └── js/
+│       └── app.js                  # Arquivo para scripts JavaScript customizados (além do Alpine.js)
+├── config/
+│   ├── database.php                # Configurações de conexão com o MySQL
+│   ├── app.php                     # Configurações gerais da aplicação (nome, timezone, etc.)
+│   └── constants.php               # Definições de constantes globais
+├── database/
+│   └── schema.sql                  # Script SQL para criação das tabelas do banco de dados
+├── logs/
+│   └── .gitkeep                    # Placeholder para diretório de logs
+├── temp/
+│   └── .gitkeep                    # Placeholder para arquivos temporários
+├── .env.example                    # Exemplo de arquivo de variáveis de ambiente
+├── router.php                      # Definição das rotas da aplicação
+└── start.php                       # Script para iniciar o PHP Built-in Server
+`
+
+SEÇÃO 6: SCHEMA MYSQL COMPLETO
+
+O banco de dados MySQL será composto pelas seguintes tabelas, com índices otimizados e chaves estrangeiras para garantir a integridade referencial.
+
+1. Tabela usuarios
+Armazena informações dos usuários do sistema.
+
+`sql
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'user', -- Ex: 'admin', 'user'
+    ativo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
+
+2. Tabela faixas
+Armazena as faixas de números de APAC disponíveis para emissão.
+
+`sql
+CREATE TABLE faixas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inicial_13dig VARCHAR(13) UNIQUE NOT NULL,
+    final_13dig VARCHAR(13) UNIQUE NOT NULL,
+    quantidade INT NOT NULL,
+    status VARCHAR(50) DEFAULT 'disponivel', -- Ex: 'disponivel', 'em_uso', 'esgotada'
+    criada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizada_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_faixas_inicial (inicial_13dig),
+    INDEX idx_faixas_final (final_13dig)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
+
+3. Tabela apacs
+Armazena as APACs emitidas.
+
+`sql
+CREATE TABLE apacs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero_14dig VARCHAR(14) UNIQUE NOT NULL,
+    digito_verificador CHAR(1) NOT NULL,
+    faixa_id INT NOT NULL,
+    impresso BOOLEAN DEFAULT FALSE,
+    data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    emitido_por_usuario_id INT,
+    FOREIGN KEY (faixa_id) REFERENCES faixas(id) ON DELETE RESTRICT,
+    FOREIGN KEY (emitido_por_usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_apacs_numero (numero_14dig),
+    INDEX idx_apacs_faixa_id (faixa_id),
+    INDEX idx_apacs_data_emissao (data_emissao)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
+
+4. Tabela logs
+Registra ações importantes para auditoria.
+
+`sql
+CREATE TABLE logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    acao VARCHAR(255) NOT NULL,
+    usuario_id INT,
+    tabela_afetada VARCHAR(100),
+    registro_id INT,
+    detalhes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_logs_usuario_id (usuario_id),
+    INDEX idx_logs_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
+
+5. Tabela prestadores (Para expansão futura)
+Armazena informações sobre prestadores de serviço. Não será implementada no MVP inicial.
+
+`sql
+CREATE TABLE prestadores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    cnpj VARCHAR(18) UNIQUE,
+    endereco VARCHAR(255),
+    telefone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`
+
+SEÇÃO 7: COMPONENTES REUTILIZÁVEIS
+
+Estes componentes serão classes ou funções auxiliares para evitar repetição de código e manter a aplicação organizada.
+
+1.  src/Database/Database.php
+    *   Responsabilidade: Gerenciar a conexão com o banco de dados MySQL usando PDO. Implementa o padrão Singleton para garantir uma única instância de conexão.
+    *   Métodos Principais:
+        *   getInstance(): Retorna a instância única da conexão PDO.
+        *   connect(): Estabelece a conexão com o banco de dados.
+        *   query($sql, $params = []): Executa uma query SQL com prepared statements.
+
+2.  src/Utils/Session.php
+    *   Responsabilidade: Gerenciar variáveis de sessão para armazenar dados do usuário logado, mensagens flash, etc.
+    *   Métodos Principais:
+        *   start(): Inicia a sessão PHP.
+        *   set($key, $value): Define um valor na sessão.
+        *   get($key, $default = null): Obtém um valor da sessão.
+        *   has($key): Verifica se uma chave existe na sessão.
+        *   remove($key): Remove um valor da sessão.
+        *   flash($key, $message): Define uma mensagem flash (disponível apenas na próxima requisição).
+        *   getFlash($key, $default = null): Obtém e remove uma mensagem flash.
+
+3.  src/Utils/Validation.php
+    *   Responsabilidade: Fornecer métodos estáticos para validação comum de dados de formulário (ex: email, senha, números, campos obrigatórios).
+    *   Métodos Principais:
+        *   validateEmail($email): Valida formato de e-mail.
+        *   validateRequired($value): Verifica se um campo não está vazio.
+        *   validateMinLength($value, $min): Verifica comprimento mínimo.
+        *   validateMaxLength($value, $max): Verifica comprimento máximo.
+        *   validateNumeric($value): Verifica se é numérico.
+        *   validateAPAC13($number): Valida formato de 13 dígitos da APAC.
+
+4.  src/Utils/Router.php
+    *   Responsabilidade: Mapear URLs para controladores e métodos específicos.
+    *   Métodos Principais:
+        *   get($path, $callback): Define uma rota GET.
+        *   post($path, $callback): Define uma rota POST.
+        *   dispatch(): Processa a requisição atual e executa o callback da rota correspondente.
+        *   redirect($path): Redireciona o navegador para um novo caminho.
+
+5.  src/Services/AuthService.php
+    *   Responsabilidade: Lógica de negócio para autenticação de usuários, incluindo login, logout e verificação de status de autenticação.
+    *   Métodos Principais:
+        *   login($email, $password): Tenta autenticar um usuário.
+        *   logout(): Desloga o usuário.
+        *   check(): Verifica se há um usuário logado.
+        *   user(): Retorna o objeto do usuário logado.
+        *   guard(): Protege uma rota, redirecionando se não autenticado.
+
+SEÇÃO 8: ALGORITMO DE DÍGITO VERIFICADOR (PHP PURO)
+
+A classe DigitoVerificadorService será responsável por toda a lógica de cálculo e validação do dígito verificador da APAC, seguindo o padrão cíclico fornecido.
+
+`php
+<?php
+
+namespace App\Services;
+
+class DigitoVerificadorService
+{
+    // Sequência cíclica para o cálculo do dígito verificador
+    private $sequencia = "78900123456"; // 11 caracteres
+
+    /**
+     * Calcula o dígito verificador para um número de APAC de 13 dígitos.
+     *
+     * @param string $numero13dig String com os 13 primeiros dígitos da APAC.
+     * @return string O dígito verificador (0-9).
+     * @throws \InvalidArgumentException Se o número não tiver 13 dígitos ou não for numérico.
+     */
+    public function calcularDV(string $numero13dig): string
+    {
+        if (!is_numeric($numero13dig) || strlen($numero13dig) !== 13) {
+            throw new \InvalidArgumentException("O número deve conter exatamente 13 dígitos numéricos.");
+        }
+
+        // Pega os dois últimos dígitos do número de 13 dígitos
+        $ultimosDoisDigitos = (int) substr($numero13dig, -2);
+
+        // Calcula o índice na sequência cíclica
+        // A sequência tem 11 caracteres (0 a 10).
+        // Ex: 11 % 11 = 0 (índice 0 -> '7')
+        // Ex: 12 % 11 = 1 (índice 1 -> '8')
+        // Ex: 10 % 11 = 10 (índice 10 -> '6')
+        $indice = $ultimosDoisDigitos % strlen($this->sequencia);
+
+        return $this->sequencia[$indice];
+    }
+
+    /**
+     * Valida um número de APAC completo (14 dígitos) verificando seu dígito verificador.
+     *
+     * @param string $numero14dig String com os 14 dígitos da APAC.
+     * @return bool True se o DV for válido, False caso contrário.
+     * @throws \InvalidArgumentException Se o número não tiver 14 dígitos ou não for numérico.
+     */
+    public function validarAPACCompleta(string $numero14dig): bool
+    {
+        if (!is_numeric($numero14dig) || strlen($numero14dig) !== 14) {
+            throw new \InvalidArgumentException("O número deve conter exatamente 14 dígitos numéricos.");
+        }
+
+        $numero13dig = substr($numero14dig, 0, 13);
+        $dvFornecido = substr($numero14dig, 13, 1);
+
+        try {
+            $dvCalculado = $this->calcularDV($numero13dig);
+            return $dvFornecido === $dvCalculado;
+        } catch (\InvalidArgumentException $e) {
+            // Isso não deve acontecer se o substr estiver correto, mas para robustez.
+            return false;
+        }
+    }
+
+    /**
+     * Gera uma sequência de números de APAC completos (14 dígitos com DV) dentro de uma faixa.
+     *
+     * @param string $inicio13 String com o número inicial de 13 dígitos da faixa.
+     * @param string $fim13 String com o número final de 13 dígitos da faixa.
+     * @return array Um array de strings, onde cada string é um número de APAC de 14 dígitos.
+     * @throws \InvalidArgumentException Se os números não forem válidos ou a faixa for inválida.
+     */
+    public function gerarSequenciaFaixa(string $inicio13, string $fim13): array
+    {
+        if (!is_numeric($inicio13) || strlen($inicio13) !== 13 || !is_numeric($fim13) || strlen($fim13) !== 13) {
+            throw new \InvalidArgumentException("Os números de início e fim da faixa devem conter exatamente 13 dígitos numéricos.");
+        }
+
+        $inicioNum = (int) $inicio13;
+        $fimNum = (int) $fim13;
+
+        if ($inicioNum > $fimNum) {
+            throw new \InvalidArgumentException("O número inicial da faixa não pode ser maior que o número final.");
+        }
+
+        $apacsGeradas = [];
+        for ($i = $inicioNum; $i <= $fimNum; $i++) {
+            $numero13dig = str_pad((string) $i, 13, '0', STR_PAD_LEFT);
+            $dv = $this->calcularDV($numero13dig);
+            $apacsGeradas[] = $numero13dig . $dv;
+        }
+
+        return $apacsGeradas;
+    }
+}
+`
+
+Exemplos Testáveis (com base nos dados fornecidos):
+
+`php
+<?php
+require_once __DIR__ . '/../vendor/autoload.php'; // Se usar composer para autoload
+// Ou inclua manualmente: require_once 'DigitoVerificadorService.php';
+
+use App\Services\DigitoVerificadorService;
+
+$dvService = new DigitoVerificadorService();
+
+echo "--- Teste de Cálculo de DV ---\n";
+$testCases = [
+    "352580728111" => "7",
+    "352580728112" => "8",
+    "352580728113" => "9",
+    "352580728114" => "0",
+    "352580728115" => "0",
+    "352580728116" => "1",
+    "352580728117" => "2",
+    "352580728118" => "3",
+    "352580728119" => "4",
+    "352580728120" => "5",
+    "352580728121" => "6",
+    "352580728122" => "7",
+    "352580728123" => "8",
+    "352580728124" => "9",
+    "352580728125" => "0",
+    "352580728126" => "0",
+];
+
+foreach ($testCases as $numero13 => $expectedDv) {
+    try {
+        $calculatedDv = $dvService->calcularDV($numero13);
+        $status = ($calculatedDv === $expectedDv) ? "SUCESSO" : "FALHA";
+        echo "Número: {$numero13}, DV Calculado: {$calculatedDv}, DV Esperado: {$expectedDv} -> {$status}\n";
+    } catch (\InvalidArgumentException $e) {
+        echo "Erro ao calcular DV para {$numero13}: " . $e->getMessage() . "\n";
+    }
+}
+
+echo "\n--- Teste de Validação de APAC Completa ---\n";
+$fullApacTestCases = [
+    "3525807281117" => true,
+    "3525807281128" => true,
+    "3525807281139" => true,
+    "3525807281140" => true,
+    "3525807281150" => true,
+    "3525807281161" => true,
+    "3525807281172" => true,
+    "3525807281183" => true,
+    "3525807281194" => true,
+    "3525807281205" => true,
+    "3525807281216" => true,
+    "3525807281227" => true,
+    "3525807281238" => true,
+    "3525807281249" => true,
+    "3525807281250" => true,
+    "3525807281260" => true,
+    "3525807281118" => false, // DV incorreto
+    "12345678901234" => false, // DV incorreto (exemplo aleatório)
+];
+
+foreach ($fullApacTestCases as $apacCompleta => $expectedResult) {
+    try {
+        $isValid = $dvService->validarAPACCompleta($apacCompleta);
+        $status = ($isValid === $expectedResult) ? "SUCESSO" : "FALHA";
+        echo "APAC Completa: {$apacCompleta}, Válida: " . ($isValid ? "Sim" : "Não") . ", Esperado: " . ($expectedResult ? "Sim" : "Não") . " -> {$status}\n";
+    } catch (\InvalidArgumentException $e) {
+        echo "Erro ao validar APAC {$apacCompleta}: " . $e->getMessage() . "\n";
+    }
+}
+
+echo "\n--- Teste de Geração de Sequência de Faixa ---\n";
+try {
+    $faixaInicio = "352580728111";
+    $faixaFim = "352580728116";
+    $sequenciaGerada = $dvService->gerarSequenciaFaixa($faixaInicio, $faixaFim);
+    echo "Faixa de {$faixaInicio} a {$faixaFim}:\n";
+    foreach ($sequenciaGerada as $apac) {
+        echo "  - {$apac}\n";
+    }
+} catch (\InvalidArgumentException $e) {
+    echo "Erro ao gerar sequência de faixa: " . $e->getMessage() . "\n";
+}
+`
+
+SEÇÃO 9: 10 PASSOS PRÁTICOS PARA INICIAR NO REPLIT
+
+Este guia prático permitirá que o desenvolvedor configure e tenha um MVP funcional em aproximadamente 4.5 horas.
+
+Passo 1 - Setup no Replit (5 min)
+*   Descrição: Crie um novo Repl no Replit.com. Selecione a linguagem "PHP Web Server".
+*   Comandos:
+    *   No terminal do Replit, verifique a versão do PHP: php --version
+    *   Verifique se o servidor web está funcionando: php -S 0.0.0.0:8080 -t . (ou o comando padrão do Replit)
+*   Resultado Esperado: Um ambiente PHP funcional e acessível pela URL do Replit.
+*   Verificação: Acessar a URL do Repl no navegador e ver a página padrão do PHP.
+
+Passo 2 - Criar estrutura de pastas (10 min)
+*   Descrição: Crie as pastas e arquivos conforme a estrutura definida na SEÇÃO 5.
+*   Comandos:
+    `bash
+    mkdir src public views config database logs temp
+    mkdir src/Controllers src/Models src/Services src/Database src/Utils
+    mkdir views/layouts views/auth views/dashboard views/faixa views/apac views/components
+    mkdir public/css public/js
+    touch src/Controllers/AuthController.php src/Controllers/FaixaController.php src/Controllers/ApacController.php src/Controllers/DashboardController.php
+    touch src/Models/Usuario.php src/Models/Faixa.php src/Models/Apac.php
+    touch src/Services/DigitoVerificadorService.php src/Services/AuthService.php src/Services/EmissaoService.php src/Services/ValidacaoService.php
+    touch src/Database/Database.php
+    touch src/Utils/Session.php src/Utils/Validation.php src/Utils/Router.php
+    touch views/layouts/app.php views/layouts/auth.php
+    touch views/auth/login.php views/auth/register.php
+    touch views/dashboard/index.php
+    touch views/faixa/index.php views/faixa/create.php views/faixa/show.php
+    touch views/apac/index.php views/apac/create.php views/apac/emitidas.php
+    touch views/components/navbar.php views/components/sidebar.php views/components/alerts.php
+    touch public/index.php public/css/style.css public/js/app.js
+    touch config/database.php config/app.php config/constants.php
+    touch database/schema.sql
+    touch logs/.gitkeep temp/.gitkeep
+    touch .env.example router.php start.php
+    `
+*   Resultado Esperado: Todas as pastas e arquivos vazios criados na estrutura correta.
+*   Verificação: Usar ls -R no terminal para listar a estrutura.
+
+Passo 3 - Configurar conexão MySQL (15 min)
+*   Descrição: Edite config/database.php com as credenciais do seu MySQL (host, database, user, password).
+*   Código (config/database.php):
+    `php
+    <?php
+    // config/database.php
+    return [
+        'host' => getenv('DB_HOST') ?: 'localhost', // Ou o IP/hostname do seu MySQL
+        'database' => getenv('DB_DATABASE') ?: 'sistema_apac',
+        'username' => getenv('DB_USERNAME') ?: 'root',
+        'password' => getenv('DB_PASSWORD') ?: '',
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci',
+    ];
+    `
+*   Descrição: Edite .env.example e renomeie para .env com suas credenciais reais.
+*   Código (.env):
+    `
+    DB_HOST=your_mysql_host
+    DB_DATABASE=sistema_apac
+    DB_USERNAME=your_mysql_user
+    DB_PASSWORD=your_mysql_password
+    APP_NAME="Sistema APAC"
+    APP_URL="http://localhost:8080" # Ou a URL do seu Replit
+    `
+*   Resultado Esperado: Arquivo de configuração do banco de dados pronto.
+*   Verificação: Nenhuma imediata, será testado no próximo passo.
+
+Passo 4 - Criar tabelas no MySQL (10 min)
+*   Descrição: Adicione o SQL para criar as tabelas na database/schema.sql.
+*   Código (database/schema.sql): (Copie o conteúdo da SEÇÃO 6 aqui)
+    `sql
+    -- Conteúdo da SEÇÃO 6 para CREATE TABLEs
+    -- Exemplo:
+    CREATE TABLE usuarios (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    -- ... (adicione todas as outras tabelas da SEÇÃO 6)
+    `
+*   Descrição: Execute o script SQL no seu banco de dados MySQL.
+*   Comandos:
+    *   Conecte-se ao MySQL via terminal (se disponível no Replit ou externamente): mysql -h your_mysql_host -u your_mysql_user -p your_mysql_database < database/schema.sql
+    *   Ou use uma ferramenta gráfica como phpMyAdmin/Adminer se configurada.
+*   Resultado Esperado: Tabelas criadas no banco de dados.
+*   Verificação: Conectar ao MySQL e listar as tabelas: SHOW TABLES;
+
+Passo 5 - Implementar Router básico (20 min)
+*   Descrição: Crie o src/Utils/Router.php e o router.php principal. Configure public/index.php para ser o ponto de entrada.
+*   Código (src/Utils/Router.php):
+    `php
+    <?php
+    namespace App\Utils;
+
+    class Router
+    {
+        private static $routes = [];
+
+        public static function get($path, $callback)
+        {
+            self::$routes['GET'][$path] = $callback;
+        }
+
+        public static function post($path, $callback)
+        {
+            self::$routes['POST'][$path] = $callback;
+        }
+
+        public static function dispatch()
+        {
+            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            $method = $_SERVER['REQUEST_METHOD'];
+
+            if (isset(self::$routes[$method][$uri])) {
+                $callback = self::$routes[$method][$uri];
+                if (is_callable($callback)) {
+                    call_user_func($callback);
+                } elseif (is_string($callback)) {
+                    list($controller, $method) = explode('@', $callback);
+                    $controller = "App\\Controllers\\" . $controller;
+                    if (class_exists($controller) && method_exists($controller, $method)) {
+                        $controllerInstance = new $controller();
+                        call_user_func([$controllerInstance, $method]);
+                    } else {
+                        self::handleNotFound();
+                    }
+                }
+            } else {
+                self::handleNotFound();
+            }
+        }
+
+        private static function handleNotFound()
+        {
+            http_response_code(404);
+            echo "<h1>404 Not Found</h1>";
+            exit();
+        }
+
+        public static function redirect($path)
+        {
+            header("Location: " . $path);
+            exit();
+        }
+    }
+    `
+*   Código (router.php):
+    `php
+    <?php
+    // router.php
+    use App\Utils\Router;
+
+    // Rotas públicas
+    Router::get('/', 'AuthController@showLogin');
+    Router::post('/login', 'AuthController@login');
+
+    // Rotas protegidas (exemplo)
+    Router::get('/dashboard', 'DashboardController@index');
+    Router::get('/logout', 'AuthController@logout');
+
+    // Rotas de Faixa
+    Router::get('/faixas', 'FaixaController@index');
+    Router::get('/faixas/create', 'FaixaController@create');
+    Router::post('/faixas', 'FaixaController@store');
+    // ... outras rotas
+    `
+*   Código (public/index.php):
+    `php
+    <?php
+    // public/index.php
+    require_once __DIR__ . '/../vendor/autoload.php'; // Se usar Composer
+    // Ou inclua manualmente os arquivos necessários
+    require_once __DIR__ . '/../src/Utils/Router.php';
+    require_once __DIR__ . '/../src/Utils/Session.php';
+    require_once __DIR__ . '/../src/Database/Database.php';
+    require_once __DIR__ . '/../src/Services/AuthService.php';
+    require_once __DIR__ . '/../src/Controllers/AuthController.php';
+    require_once __DIR__ . '/../src/Controllers/DashboardController.php';
+    require_once __DIR__ . '/../src/Controllers/FaixaController.php';
+    require_once __DIR__ . '/../src/Controllers/ApacController.php';
+    require_once __DIR__ . '/../src/Services/DigitoVerificadorService.php';
+    require_once __DIR__ . '/../src/Models/Usuario.php';
+    require_once __DIR__ . '/../src/Models/Faixa.php';
+    require_once __DIR__ . '/../src/Models/Apac.php';
+
+
+    // Inicia a sessão
+    App\Utils\Session::start();
+
+    // Carrega as rotas
+    require_once __DIR__ . '/../router.php';
+
+    // Despacha a requisição
+    App\Utils\Router::dispatch();
+    `
+*   Código (start.php):
+    `php
+    <?php
+    // start.php
+    // Inicia o servidor web embutido do PHP
+    // Serve o diretório 'public' como root
+    // Acessível em http://localhost:8080
+    echo "Starting PHP development server...\n";
+    echo "Access your application at http://localhost:8080\n";
+    exec('php -S 0.0.0.0:8080 -t public');
+    `
+*   Resultado Esperado: O servidor PHP rodando e o roteador básico funcionando.
+*   Verificação:
+    *   No terminal do Replit, execute php start.php.
+    *   Acesse a URL do Repl no navegador. Você deve ver um erro 404 (ainda não há controllers).
+    *   Crie um AuthController.php e um DashboardController.php vazios por enquanto.
+    *   Crie views/auth/login.php e views/dashboard/index.php com um <h1> simples.
+    *   Acesse / e /dashboard para ver se o roteamento está chamando os controllers e views corretos.
+
+Passo 6 - Criar autenticação simples (30 min)
+*   Descrição: Implemente src/Services/AuthService.php, src/Models/Usuario.php, src/Controllers/AuthController.php e as views de login/dashboard.
+*   Código (src/Database/Database.php):
+    `php
+    <?php
+    namespace App\Database;
+
+    use PDO;
+    use PDOException;
+
+    class Database
+    {
+        private static $instance = null;
+        private $conn;
+
+        private function __construct()
+        {
+            $config = require __DIR__ . '/../../config/database.php';
+            $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
+            try {
+                $this->conn = new PDO($dsn, $config['username'], $config['password']);
+                $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                die("Erro de conexão com o banco de dados: " . $e->getMessage());
+            }
+        }
+
+        public static function getInstance(): PDO
+        {
+            if (self::$instance === null) {
+                self::$instance = new Database();
+            }
+            return self::$instance->conn;
+        }
+    }
+    `
+*   Código (src/Models/Usuario.php):
+    `php
+    <?php
+    namespace App\Models;
+
+    use App\Database\Database;
+    use PDO;
+
+    class Usuario
+    {
+        public static function findByEmail(string $email): ?array
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = :email LIMIT 1");
+            $stmt->execute([':email' => $email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $user ?: null;
+        }
+
+        public static function create(array $data): int
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("INSERT INTO usuarios (nome, email, password, role) VALUES (:nome, :email, :password, :role)");
+            $stmt->execute([
+                ':nome' => $data['nome'],
+                ':email' => $data['email'],
+                ':password' => password_hash($data['password'], PASSWORD_DEFAULT),
+                ':role' => $data['role'] ?? 'user'
+            ]);
+            return (int) $pdo->lastInsertId();
+        }
+    }
+    `
+*   Código (src/Services/AuthService.php):
+    `php
+    <?php
+    namespace App\Services;
+
+    use App\Models\Usuario;
+    use App\Utils\Session;
+
+    class AuthService
+    {
+        public function login(string $email, string $password): bool
+        {
+            $user = Usuario::findByEmail($email);
+
+            if ($user && password_verify($password, $user['password'])) {
+                Session::set('user_id', $user['id']);
+                Session::set('user_name', $user['nome']);
+                Session::set('user_email', $user['email']);
+                Session::set('user_role', $user['role']);
+                return true;
+            }
+            return false;
+        }
+
+        public function logout(): void
+        {
+            Session::remove('user_id');
+            Session::remove('user_name');
+            Session::remove('user_email');
+            Session::remove('user_role');
+            session_destroy();
+        }
+
+        public function check(): bool
+        {
+            return Session::has('user_id');
+        }
+
+        public function user(): ?array
+        {
+            if ($this->check()) {
+                return [
+                    'id' => Session::get('user_id'),
+                    'name' => Session::get('user_name'),
+                    'email' => Session::get('user_email'),
+                    'role' => Session::get('user_role')
+                ];
+            }
+            return null;
+        }
+
+        public function guard(): void
+        {
+            if (!$this->check()) {
+                Session::flash('error', 'Você precisa estar logado para acessar esta página.');
+                \App\Utils\Router::redirect('/');
+            }
+        }
+    }
+    `
+*   Código (src/Controllers/AuthController.php):
+    `php
+    <?php
+    namespace App\Controllers;
+
+    use App\Services\AuthService;
+    use App\Utils\Session;
+    use App\Utils\Router;
+    use App\Models\Usuario; // Para criar um usuário de teste
+
+    class AuthController
+    {
+        private $authService;
+
+        public function __construct()
+        {
+            $this->authService = new AuthService();
+        }
+
+        public function showLogin()
+        {
+            if ($this->authService->check()) {
+                Router::redirect('/dashboard');
+            }
+            $error = Session::getFlash('error');
+            require_once __DIR__ . '/../../views/auth/login.php';
+        }
+
+        public function login()
+        {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $email = $_POST['email'] ?? '';
+                $password = $_POST['password'] ?? '';
+
+                if ($this->authService->login($email, $password)) {
+                    Session::flash('success', 'Login realizado com sucesso!');
+                    Router::redirect('/dashboard');
+                } else {
+                    Session::flash('error', 'Email ou senha inválidos.');
+                    Router::redirect('/');
+                }
+            }
+        }
+
+        public function logout()
+        {
+            $this->authService->logout();
+            Session::flash('success', 'Você foi desconectado.');
+            Router::redirect('/');
+        }
+
+        // Método para criar um usuário de teste (apenas para desenvolvimento)
+        public function createTestUser() {
+            $user = Usuario::findByEmail('admin@example.com');
+            if (!$user) {
+                Usuario::create([
+                    'nome' => 'Administrador',
+                    'email' => 'admin@example.com',
+                    'password' => 'password', // Senha simples para teste
+                    'role' => 'admin'
+                ]);
+                echo "Usuário de teste 'admin@example.com' com senha 'password' criado.\n";
+            } else {
+                echo "Usuário de teste já existe.\n";
+            }
+        }
+    }
+    `
+*   Código (src/Controllers/DashboardController.php):
+    `php
+    <?php
+    namespace App\Controllers;
+
+    use App\Services\AuthService;
+    use App\Utils\Session;
+
+    class DashboardController
+    {
+        private $authService;
+
+        public function __construct()
+        {
+            $this->authService = new AuthService();
+        }
+
+        public function index()
+        {
+            $this->authService->guard(); // Protege a rota
+            $user = $this->authService->user();
+            $success = Session::getFlash('success');
+            require_once __DIR__ . '/../../views/dashboard/index.php';
+        }
+    }
+    `
+*   Código (views/auth/login.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+            <h2 class="text-2xl font-bold text-center mb-6">Login</h2>
+            <?php if (isset($error) && $error): ?>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline"><?= htmlspecialchars($error) ?></span>
+                </div>
+            <?php endif; ?>
+            <form action="/login" method="POST">
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                    <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Senha:</label>
+                    <input type="password" id="password" name="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Entrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </body>
+    </html>
+    `
+*   Código (views/dashboard/index.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar (simplificada) -->
+            <div class="w-64 bg-gray-800 text-white p-4">
+                <h1 class="text-2xl font-bold mb-6">Sistema APAC</h1>
+                <nav>
+                    <ul>
+                        <li class="mb-2"><a href="/dashboard" class="block hover:bg-gray-700 p-2 rounded">Dashboard</a></li>
+                        <li class="mb-2"><a href="/faixas" class="block hover:bg-gray-700 p-2 rounded">Faixas de APAC</a></li>
+                        <li class="mb-2"><a href="/apacs" class="block hover:bg-gray-700 p-2 rounded">APACs Emitidas</a></li>
+                        <li class="mb-2"><a href="/logout" class="block hover:bg-gray-700 p-2 rounded">Sair</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <h2 class="text-3xl font-bold mb-6">Bem-vindo, <?= htmlspecialchars($user['name'] ?? 'Usuário') ?>!</h2>
+                <?php if (isset($success) && $success): ?>
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <span class="block sm:inline"><?= htmlspecialchars($success) ?></span>
+                    </div>
+                <?php endif; ?>
+                <p class="text-gray-700">Este é o seu painel de controle. Use o menu lateral para navegar.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Resultado Esperado: Sistema com login/logout funcional e redirecionamento para o dashboard.
+*   Verificação:
+    *   Execute php start.php.
+    *   Acesse /. Você deve ver a tela de login.
+    *   Crie um usuário de teste: Adicione temporariamente (new AuthController())->createTestUser(); no public/index.php antes de Router::dispatch(); e execute o servidor uma vez. Remova a linha depois.
+    *   Faça login com admin@example.com e password. Você deve ser redirecionado para o dashboard.
+    *   Clique em "Sair" para testar o logout.
+
+Passo 7 - CRUD Faixa (40 min)
+*   Descrição: Implemente src/Models/Faixa.php, src/Controllers/FaixaController.php e as views de faixas.
+*   Código (src/Models/Faixa.php):
+    `php
+    <?php
+    namespace App\Models;
+
+    use App\Database\Database;
+    use PDO;
+
+    class Faixa
+    {
+        public static function all(): array
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->query("SELECT * FROM faixas ORDER BY criada_em DESC");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        public static function find(int $id): ?array
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("SELECT * FROM faixas WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => $id]);
+            $faixa = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $faixa ?: null;
+        }
+
+        public static function create(array $data): int
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("INSERT INTO faixas (inicial_13dig, final_13dig, quantidade, status) VALUES (:inicial_13dig, :final_13dig, :quantidade, :status)");
+            $stmt->execute([
+                ':inicial_13dig' => $data['inicial_13dig'],
+                ':final_13dig' => $data['final_13dig'],
+                ':quantidade' => $data['quantidade'],
+                ':status' => $data['status'] ?? 'disponivel'
+            ]);
+            return (int) $pdo->lastInsertId();
+        }
+
+        public static function update(int $id, array $data): bool
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("UPDATE faixas SET inicial_13dig = :inicial_13dig, final_13dig = :final_13dig, quantidade = :quantidade, status = :status WHERE id = :id");
+            return $stmt->execute([
+                ':inicial_13dig' => $data['inicial_13dig'],
+                ':final_13dig' => $data['final_13dig'],
+                ':quantidade' => $data['quantidade'],
+                ':status' => $data['status'],
+                ':id' => $id
+            ]);
+        }
+
+        public static function delete(int $id): bool
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("DELETE FROM faixas WHERE id = :id");
+            return $stmt->execute([':id' => $id]);
+        }
+    }
+    `
+*   Código (src/Controllers/FaixaController.php):
+    `php
+    <?php
+    namespace App\Controllers;
+
+    use App\Models\Faixa;
+    use App\Services\AuthService;
+    use App\Utils\Session;
+    use App\Utils\Router;
+    use App\Utils\Validation;
+
+    class FaixaController
+    {
+        private $authService;
+
+        public function __construct()
+        {
+            $this->authService = new AuthService();
+            $this->authService->guard(); // Protege todas as rotas deste controller
+        }
+
+        public function index()
+        {
+            $faixas = Faixa::all();
+            $success = Session::getFlash('success');
+            $error = Session::getFlash('error');
+            require_once __DIR__ . '/../../views/faixa/index.php';
+        }
+
+        public function create()
+        {
+            $error = Session::getFlash('error');
+            require_once __DIR__ . '/../../views/faixa/create.php';
+        }
+
+        public function store()
+        {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $inicial_13dig = $_POST['inicial_13dig'] ?? '';
+                $final_13dig = $_POST['final_13dig'] ?? '';
+
+                // Validação básica
+                if (!Validation::validateAPAC13($inicial_13dig) || !Validation::validateAPAC13($final_13dig)) {
+                    Session::flash('error', 'Os números da faixa devem ter 13 dígitos numéricos.');
+                    Router::redirect('/faixas/create');
+                }
+
+                if ((int)$inicial_13dig >= (int)$final_13dig) {
+                    Session::flash('error', 'O número inicial deve ser menor que o final.');
+                    Router::redirect('/faixas/create');
+                }
+
+                $quantidade = (int)$final_13dig - (int)$inicial_13dig + 1;
+
+                Faixa::create([
+                    'inicial_13dig' => $inicial_13dig,
+                    'final_13dig' => $final_13dig,
+                    'quantidade' => $quantidade,
+                    'status' => 'disponivel'
+                ]);
+
+                Session::flash('success', 'Faixa de APAC cadastrada com sucesso!');
+                Router::redirect('/faixas');
+            }
+        }
+
+        public function show(int $id)
+        {
+            $faixa = Faixa::find($id);
+            if (!$faixa) {
+                Router::handleNotFound();
+            }
+            $success = Session::getFlash('success');
+            $error = Session::getFlash('error');
+            require_once __DIR__ . '/../../views/faixa/show.php';
+        }
+
+        public function update(int $id)
+        {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $inicial_13dig = $_POST['inicial_13dig'] ?? '';
+                $final_13dig = $_POST['final_13dig'] ?? '';
+                $status = $_POST['status'] ?? 'disponivel';
+
+                if (!Validation::validateAPAC13($inicial_13dig) || !Validation::validateAPAC13($final_13dig)) {
+                    Session::flash('error', 'Os números da faixa devem ter 13 dígitos numéricos.');
+                    Router::redirect('/faixas/' . $id);
+                }
+
+                if ((int)$inicial_13dig >= (int)$final_13dig) {
+                    Session::flash('error', 'O número inicial deve ser menor que o final.');
+                    Router::redirect('/faixas/' . $id);
+                }
+
+                $quantidade = (int)$final_13dig - (int)$inicial_13dig + 1;
+
+                Faixa::update($id, [
+                    'inicial_13dig' => $inicial_13dig,
+                    'final_13dig' => $final_13dig,
+                    'quantidade' => $quantidade,
+                    'status' => $status
+                ]);
+
+                Session::flash('success', 'Faixa de APAC atualizada com sucesso!');
+                Router::redirect('/faixas');
+            }
+        }
+
+        public function delete(int $id)
+        {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') { // Usar POST para exclusão
+                Faixa::delete($id);
+                Session::flash('success', 'Faixa de APAC excluída com sucesso!');
+                Router::redirect('/faixas');
+            }
+        }
+    }
+    `
+*   Código (src/Utils/Validation.php):
+    `php
+    <?php
+    namespace App\Utils;
+
+    class Validation
+    {
+        public static function validateEmail(string $email): bool
+        {
+            return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+        }
+
+        public static function validateRequired($value): bool
+        {
+            return !empty($value);
+        }
+
+        public static function validateMinLength(string $value, int $min): bool
+        {
+            return strlen($value) >= $min;
+        }
+
+        public static function validateMaxLength(string $value, int $max): bool
+        {
+            return strlen($value) <= $max;
+        }
+
+        public static function validateNumeric($value): bool
+        {
+            return is_numeric($value);
+        }
+
+        public static function validateAPAC13(string $number): bool
+        {
+            return self::validateNumeric($number) && strlen($number) === 13;
+        }
+
+        public static function validateAPAC14(string $number): bool
+        {
+            return self::validateNumeric($number) && strlen($number) === 14;
+        }
+    }
+    `
+*   Código (views/faixa/index.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Faixas de APAC - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <?php require_once __DIR__ . '/../components/sidebar.php'; ?>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Faixas de APAC</h2>
+                    <a href="/faixas/create" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        Nova Faixa
+                    </a>
+                </div>
+
+                <?php require_once __DIR__ . '/../components/alerts.php'; ?>
+
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">ID</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Início (13 dígitos)</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Fim (13 dígitos)</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Quantidade</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Status</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($faixas)): ?>
+                            <tr>
+                                <td colspan="6" class="py-4 px-4 text-center text-gray-500">Nenhuma faixa cadastrada.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($faixas as $faixa): ?>
+                                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($faixa['id']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($faixa['inicial_13dig']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($faixa['final_13dig']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($faixa['quantidade']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($faixa['status']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">
+                                        <a href="/faixas/<?= $faixa['id'] ?>" class="text-blue-600 hover:text-blue-800 mr-2">Editar</a>
+                                        <form action="/faixas/<?= $faixa['id'] ?>/delete" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja excluir esta faixa?');">
+                                            <button type="submit" class="text-red-600 hover:text-red-800">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Código (views/faixa/create.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cadastrar Faixa de APAC - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <?php require_once __DIR__ . '/../components/sidebar.php'; ?>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <h2 class="text-3xl font-bold mb-6">Cadastrar Nova Faixa de APAC</h2>
+
+                <?php require_once __DIR__ . '/../components/alerts.php'; ?>
+
+                <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+                    <form action="/faixas" method="POST">
+                        <div class="mb-4">
+                            <label for="inicial_13dig" class="block text-gray-700 text-sm font-bold mb-2">Número Inicial (13 dígitos):</label>
+                            <input type="text" id="inicial_13dig" name="inicial_13dig" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" maxlength="13" pattern="\d{13}" title="Deve conter exatamente 13 dígitos numéricos" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="final_13dig" class="block text-gray-700 text-sm font-bold mb-2">Número Final (13 dígitos):</label>
+                            <input type="text" id="final_13dig" name="final_13dig" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" maxlength="13" pattern="\d{13}" title="Deve conter exatamente 13 dígitos numéricos" required>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                Cadastrar Faixa
+                            </button>
+                            <a href="/faixas" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Código (views/faixa/show.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Editar Faixa de APAC - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <?php require_once __DIR__ . '/../components/sidebar.php'; ?>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <h2 class="text-3xl font-bold mb-6">Editar Faixa de APAC #<?= htmlspecialchars($faixa['id']) ?></h2>
+
+                <?php require_once __DIR__ . '/../components/alerts.php'; ?>
+
+                <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+                    <form action="/faixas/<?= $faixa['id'] ?>/update" method="POST">
+                        <div class="mb-4">
+                            <label for="inicial_13dig" class="block text-gray-700 text-sm font-bold mb-2">Número Inicial (13 dígitos):</label>
+                            <input type="text" id="inicial_13dig" name="inicial_13dig" value="<?= htmlspecialchars($faixa['inicial_13dig']) ?>" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" maxlength="13" pattern="\d{13}" title="Deve conter exatamente 13 dígitos numéricos" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="final_13dig" class="block text-gray-700 text-sm font-bold mb-2">Número Final (13 dígitos):</label>
+                            <input type="text" id="final_13dig" name="final_13dig" value="<?= htmlspecialchars($faixa['final_13dig']) ?>" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" maxlength="13" pattern="\d{13}" title="Deve conter exatamente 13 dígitos numéricos" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Status:</label>
+                            <select id="status" name="status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="disponivel" <?= $faixa['status'] == 'disponivel' ? 'selected' : '' ?>>Disponível</option>
+                                <option value="em_uso" <?= $faixa['status'] == 'em_uso' ? 'selected' : '' ?>>Em Uso</option>
+                                <option value="esgotada" <?= $faixa['status'] == 'esgotada' ? 'selected' : '' ?>>Esgotada</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                Atualizar Faixa
+                            </button>
+                            <a href="/faixas" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Código (views/components/sidebar.php):
+    `html
+    <div class="w-64 bg-gray-800 text-white p-4">
+        <h1 class="text-2xl font-bold mb-6">Sistema APAC</h1>
+        <nav>
+            <ul>
+                <li class="mb-2"><a href="/dashboard" class="block hover:bg-gray-700 p-2 rounded">Dashboard</a></li>
+                <li class="mb-2"><a href="/faixas" class="block hover:bg-gray-700 p-2 rounded">Faixas de APAC</a></li>
+                <li class="mb-2"><a href="/apacs" class="block hover:bg-gray-700 p-2 rounded">APACs Emitidas</a></li>
+                <li class="mb-2"><a href="/logout" class="block hover:bg-gray-700 p-2 rounded">Sair</a></li>
+            </ul>
+        </nav>
+    </div>
+    `
+*   Código (views/components/alerts.php):
+    `php
+    <?php
+    use App\Utils\Session;
+    $success = Session::getFlash('success');
+    $error = Session::getFlash('error');
+    if ($success): ?>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline"><?= htmlspecialchars($success) ?></span>
+        </div>
+    <?php endif; ?>
+    <?php if ($error): ?>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline"><?= htmlspecialchars($error) ?></span>
+        </div>
+    <?php endif; ?>
+    `
+*   Atualize router.php com as novas rotas:
+    `php
+    // ... (rotas existentes)
+
+    // Rotas de Faixa
+    Router::get('/faixas', 'FaixaController@index');
+    Router::get('/faixas/create', 'FaixaController@create');
+    Router::post('/faixas', 'FaixaController@store');
+    Router::get('/faixas/(\d+)', 'FaixaController@show'); // Rota para visualizar/editar uma faixa específica
+    Router::post('/faixas/(\d+)/update', 'FaixaController@update'); // Rota para atualizar uma faixa
+    Router::post('/faixas/(\d+)/delete', 'FaixaController@delete'); // Rota para excluir uma faixa
+    `
+*   Resultado Esperado: Funcionalidades de CRUD para faixas de APAC.
+*   Verificação:
+    *   Acesse /faixas. Você deve ver a lista (vazia inicialmente).
+    *   Clique em "Nova Faixa", preencha e cadastre.
+    *   Verifique se a faixa aparece na lista.
+    *   Clique em "Editar" e tente atualizar.
+    *   Tente excluir uma faixa.
+
+Passo 8 - Implementar algoritmo DV (30 min)
+*   Descrição: Copie o código da classe DigitoVerificadorService da SEÇÃO 8 para src/Services/DigitoVerificadorService.php.
+*   Código (src/Services/DigitoVerificadorService.php): (Copie o conteúdo completo da classe da SEÇÃO 8 aqui)
+*   Resultado Esperado: A lógica de cálculo e validação do dígito verificador está disponível para uso.
+*   Verificação: Crie um script de teste simples (ex: test_dv.php na raiz) e execute-o via terminal (php test_dv.php) para confirmar que os exemplos funcionam.
+
+Passo 9 - Emissão Individual (40 min)
+*   Descrição: Implemente src/Models/Apac.php, src/Services/EmissaoService.php, e adicione lógica ao ApacController.php e views de APAC.
+*   Código (src/Models/Apac.php):
+    `php
+    <?php
+    namespace App\Models;
+
+    use App\Database\Database;
+    use PDO;
+
+    class Apac
+    {
+        public static function all(): array
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->query("SELECT a.*, f.inicial_13dig as faixa_inicial, f.final_13dig as faixa_final FROM apacs a JOIN faixas f ON a.faixa_id = f.id ORDER BY a.data_emissao DESC");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        public static function create(array $data): int
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("INSERT INTO apacs (numero_14dig, digito_verificador, faixa_id, impresso, emitido_por_usuario_id) VALUES (:numero_14dig, :digito_verificador, :faixa_id, :impresso, :emitido_por_usuario_id)");
+            $stmt->execute([
+                ':numero_14dig' => $data['numero_14dig'],
+                ':digito_verificador' => $data['digito_verificador'],
+                ':faixa_id' => $data['faixa_id'],
+                ':impresso' => $data['impresso'] ?? false,
+                ':emitido_por_usuario_id' => $data['emitido_por_usuario_id']
+            ]);
+            return (int) $pdo->lastInsertId();
+        }
+
+        public static function findAvailableApacInFaixa(int $faixaId): ?string
+        {
+            $pdo = Database::getInstance();
+            // Encontra o próximo número de APAC disponível na faixa
+            // Isso é uma simplificação. Em um sistema real, seria mais complexo.
+            // Aqui, apenas pegamos o menor número da faixa que ainda não foi emitido.
+            $stmt = $pdo->prepare("
+                SELECT f.inicial_13dig, f.final_13dig
+                FROM faixas f
+                WHERE f.id = :faixa_id
+            ");
+            $stmt->execute([':faixa_id' => $faixaId]);
+            $faixa = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$faixa) {
+                return null;
+            }
+
+            $inicioNum = (int) $faixa['inicial_13dig'];
+            $fimNum = (int) $faixa['final_13dig'];
+
+            for ($i = $inicioNum; $i <= $fimNum; $i++) {
+                $numero13dig = str_pad((string) $i, 13, '0', STR_PAD_LEFT);
+                $dvService = new \App\Services\DigitoVerificadorService();
+                $numero14dig = $numero13dig . $dvService->calcularDV($numero13dig);
+
+                $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM apacs WHERE numero_14dig = :numero_14dig");
+                $stmtCheck->execute([':numero_14dig' => $numero14dig]);
+                if ($stmtCheck->fetchColumn() == 0) {
+                    return $numero13dig; // Retorna o número de 13 dígitos disponível
+                }
+            }
+            return null; // Nenhuma APAC disponível na faixa
+        }
+
+        public static function markAsPrinted(int $apacId): bool
+        {
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare("UPDATE apacs SET impresso = TRUE WHERE id = :id");
+            return $stmt->execute([':id' => $apacId]);
+        }
+    }
+    `
+*   Código (src/Services/EmissaoService.php):
+    `php
+    <?php
+    namespace App\Services;
+
+    use App\Models\Apac;
+    use App\Models\Faixa;
+    use App\Services\DigitoVerificadorService;
+    use App\Utils\Session;
+
+    class EmissaoService
+    {
+        private $dvService;
+
+        public function __construct()
+        {
+            $this->dvService = new DigitoVerificadorService();
+        }
+
+        public function emitirApacIndividual(int $faixaId, int $userId): ?array
+        {
+            $faixa = Faixa::find($faixaId);
+            if (!$faixa || $faixa['status'] === 'esgotada') {
+                Session::flash('error', 'Faixa de APAC inválida ou esgotada.');
+                return null;
+            }
+
+            $numero13digDisponivel = Apac::findAvailableApacInFaixa($faixaId);
+
+            if (!$numero13digDisponivel) {
+                // Atualiza o status da faixa para esgotada se não houver mais APACs
+                Faixa::update($faixaId, array_merge($faixa, ['status' => 'esgotada']));
+                Session::flash('error', 'Não há APACs disponíveis nesta faixa.');
+                return null;
+            }
+
+            $digitoVerificador = $this->dvService->calcularDV($numero13digDisponivel);
+            $numero14dig = $numero13digDisponivel . $digitoVerificador;
+
+            $apacId = Apac::create([
+                'numero_14dig' => $numero14dig,
+                'digito_verificador' => $digitoVerificador,
+                'faixa_id' => $faixaId,
+                'impresso' => false,
+                'emitido_por_usuario_id' => $userId
+            ]);
+
+            if ($apacId) {
+                // Opcional: Atualizar status da faixa para 'em_uso' se ainda for 'disponivel'
+                if ($faixa['status'] === 'disponivel') {
+                    Faixa::update($faixaId, array_merge($faixa, ['status' => 'em_uso']));
+                }
+                return ['id' => $apacId, 'numero_14dig' => $numero14dig];
+            }
+            return null;
+        }
+    }
+    `
+*   Código (src/Controllers/ApacController.php):
+    `php
+    <?php
+    namespace App\Controllers;
+
+    use App\Models\Apac;
+    use App\Models\Faixa;
+    use App\Services\AuthService;
+    use App\Services\EmissaoService;
+    use App\Utils\Session;
+    use App\Utils\Router;
+
+    class ApacController
+    {
+        private $authService;
+        private $emissaoService;
+
+        public function __construct()
+        {
+            $this->authService = new AuthService();
+            $this->authService->guard(); // Protege todas as rotas deste controller
+            $this->emissaoService = new EmissaoService();
+        }
+
+        public function index()
+        {
+            $apacs = Apac::all();
+            $success = Session::getFlash('success');
+            $error = Session::getFlash('error');
+            require_once __DIR__ . '/../../views/apac/index.php';
+        }
+
+        public function create()
+        {
+            $faixas = Faixa::all(); // Para selecionar a faixa
+            $error = Session::getFlash('error');
+            require_once __DIR__ . '/../../views/apac/create.php';
+        }
+
+        public function store()
+        {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $faixaId = (int) ($_POST['faixa_id'] ?? 0);
+                $userId = Session::get('user_id');
+
+                if (!$faixaId || !$userId) {
+                    Session::flash('error', 'Dados inválidos para emissão.');
+                    Router::redirect('/apacs/create');
+                }
+
+                $result = $this->emissaoService->emitirApacIndividual($faixaId, $userId);
+
+                if ($result) {
+                    Session::flash('success', 'APAC ' . htmlspecialchars($result['numero_14dig']) . ' emitida com sucesso!');
+                    Router::redirect('/apacs');
+                } else {
+                    Router::redirect('/apacs/create'); // Erro já flashado pelo service
+                }
+            }
+        }
+
+        public function markAsPrinted(int $id)
+        {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (Apac::markAsPrinted($id)) {
+                    Session::flash('success', 'APAC marcada como impressa.');
+                } else {
+                    Session::flash('error', 'Erro ao marcar APAC como impressa.');
+                }
+                Router::redirect('/apacs');
+            }
+        }
+    }
+    `
+*   Código (views/apac/index.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>APACs Emitidas - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <?php require_once __DIR__ . '/../components/sidebar.php'; ?>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">APACs Emitidas</h2>
+                    <a href="/apacs/create" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        Emitir Nova APAC
+                    </a>
+                </div>
+
+                <?php require_once __DIR__ . '/../components/alerts.php'; ?>
+
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">ID</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Número APAC</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Faixa</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Impressa?</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Data Emissão</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($apacs)): ?>
+                            <tr>
+                                <td colspan="6" class="py-4 px-4 text-center text-gray-500">Nenhuma APAC emitida.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($apacs as $apac): ?>
+                                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($apac['id']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($apac['numero_14dig']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($apac['faixa_inicial']) ?> - <?= htmlspecialchars($apac['faixa_final']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $apac['impresso'] ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' ?>">
+                                            <?= $apac['impresso'] ? 'Sim' : 'Não' ?>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars((new DateTime($apac['data_emissao']))->format('d/m/Y H:i')) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">
+                                        <?php if (!$apac['impresso']): ?>
+                                            <form action="/apacs/<?= $apac['id'] ?>/mark-printed" method="POST" class="inline-block" onsubmit="return confirm('Marcar esta APAC como impressa?');">
+                                                <button type="submit" class="text-blue-600 hover:text-blue-800">Marcar Impressa</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <span class="text-gray-500">Impressa</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Código (views/apac/create.php):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Emitir APAC - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <?php require_once __DIR__ . '/../components/sidebar.php'; ?>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <h2 class="text-3xl font-bold mb-6">Emitir Nova APAC</h2>
+
+                <?php require_once __DIR__ . '/../components/alerts.php'; ?>
+
+                <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+                    <form action="/apacs" method="POST">
+                        <div class="mb-4">
+                            <label for="faixa_id" class="block text-gray-700 text-sm font-bold mb-2">Selecionar Faixa de APAC:</label>
+                            <select id="faixa_id" name="faixa_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                                <option value="">-- Selecione uma faixa --</option>
+                                <?php foreach ($faixas as $faixa): ?>
+                                    <?php if ($faixa['status'] !== 'esgotada'): ?>
+                                        <option value="<?= htmlspecialchars($faixa['id']) ?>">
+                                            <?= htmlspecialchars($faixa['inicial_13dig']) ?> - <?= htmlspecialchars($faixa['final_13dig']) ?> (<?= htmlspecialchars($faixa['status']) ?>)
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                Emitir APAC
+                            </button>
+                            <a href="/apacs" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Atualize router.php com as novas rotas:
+    `php
+    // ... (rotas existentes)
+
+    // Rotas de APAC
+    Router::get('/apacs', 'ApacController@index');
+    Router::get('/apacs/create', 'ApacController@create');
+    Router::post('/apacs', 'ApacController@store');
+    Router::post('/apacs/(\d+)/mark-printed', 'ApacController@markAsPrinted');
+    `
+*   Resultado Esperado: Capacidade de emitir APACs individualmente e visualizá-las.
+*   Verificação:
+    *   Cadastre algumas faixas de APAC.
+    *   Acesse /apacs/create, selecione uma faixa e emita uma APAC.
+    *   Verifique se a APAC aparece na lista em /apacs.
+    *   Teste a funcionalidade "Marcar Impressa".
+
+Passo 10 - Dashboard e Visualização (30 min)
+*   Descrição: Melhore o dashboard para exibir informações relevantes (ex: total de faixas, total de APACs emitidas, APACs não impressas).
+*   Código (src/Controllers/DashboardController.php - Atualizado):
+    `php
+    <?php
+    namespace App\Controllers;
+
+    use App\Models\Apac;
+    use App\Models\Faixa;
+    use App\Services\AuthService;
+    use App\Utils\Session;
+
+    class DashboardController
+    {
+        private $authService;
+
+        public function __construct()
+        {
+            $this->authService = new AuthService();
+        }
+
+        public function index()
+        {
+            $this->authService->guard(); // Protege a rota
+            $user = $this->authService->user();
+            $success = Session::getFlash('success');
+
+            // Dados para o dashboard
+            $totalFaixas = count(Faixa::all());
+            $totalApacsEmitidas = count(Apac::all());
+            $apacsNaoImpressas = array_filter(Apac::all(), fn($apac) => !$apac['impresso']);
+            $totalApacsNaoImpressas = count($apacsNaoImpressas);
+
+            require_once __DIR__ . '/../../views/dashboard/index.php';
+        }
+    }
+    `
+*   Código (views/dashboard/index.php - Atualizado):
+    `html
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard - Sistema APAC</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+        <div class="flex h-screen">
+            <!-- Sidebar -->
+            <?php require_once __DIR__ . '/../components/sidebar.php'; ?>
+
+            <!-- Conteúdo Principal -->
+            <div class="flex-1 p-8">
+                <h2 class="text-3xl font-bold mb-6">Bem-vindo, <?= htmlspecialchars($user['name'] ?? 'Usuário') ?>!</h2>
+                <?php require_once __DIR__ . '/../components/alerts.php'; ?>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Total de Faixas</h3>
+                        <p class="text-4xl font-bold text-blue-600"><?= htmlspecialchars($totalFaixas) ?></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">APACs Emitidas</h3>
+                        <p class="text-4xl font-bold text-green-600"><?= htmlspecialchars($totalApacsEmitidas) ?></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">APACs Não Impressas</h3>
+                        <p class="text-4xl font-bold text-yellow-600"><?= htmlspecialchars($totalApacsNaoImpressas) ?></p>
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold mt-8 mb-4">APACs Recentes Não Impressas</h3>
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Número APAC</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Faixa</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Data Emissão</th>
+                            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-600">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($apacsNaoImpressas)): ?>
+                            <tr>
+                                <td colspan="4" class="py-4 px-4 text-center text-gray-500">Todas as APACs foram impressas!</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach (array_slice($apacsNaoImpressas, 0, 5) as $apac): // Exibe as 5 mais recentes ?>
+                                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($apac['numero_14dig']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars($apac['faixa_inicial']) ?> - <?= htmlspecialchars($apac['faixa_final']) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700"><?= htmlspecialchars((new DateTime($apac['data_emissao']))->format('d/m/Y H:i')) ?></td>
+                                    <td class="py-3 px-4 text-sm text-gray-700">
+                                        <form action="/apacs/<?= $apac['id'] ?>/mark-printed" method="POST" class="inline-block" onsubmit="return confirm('Marcar esta APAC como impressa?');">
+                                            <button type="submit" class="text-blue-600 hover:text-blue-800">Marcar Impressa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+*   Resultado Esperado: Dashboard com informações resumidas e lista de APACs não impressas.
+*   Verificação: Acesse /dashboard e verifique se os contadores e a lista de APACs não impressas estão corretos.
+
+SEÇÃO 10: SPRINTS PLANEJADOS
+
+O desenvolvimento será dividido em sprints, com foco em entregar valor incremental.
+
+Sprint 1: Setup + Autenticação + CRUD Faixa
+*   Duração: 1-2 Semanas
+*   Funcionalidades:
+    *   Configuração do ambiente Replit e MySQL.
+    *   Estrutura de pastas e roteamento básico.
+    *   Autenticação de usuários (login, logout).
+    *   Dashboard inicial.
+    *   CRUD completo para Faixas de APAC.
+    *   Implementação do algoritmo de Dígito Verificador.
+*   Dependências: Nenhuma.
+*   Resultado Esperado: Sistema com usuários, faixas de APAC gerenciáveis e algoritmo DV testado.
+
+Sprint 2: Emissão Individual + Controle de Impressão
+*   Duração: 3-4 Semanas
+*   Funcionalidades:
+    *   Emissão individual de APACs, utilizando o algoritmo DV.
+    *   Registro de APACs emitidas no banco de dados.
+    *   Controle de status de impressão para cada APAC.
+    *   Visualização de APACs emitidas.
+    *   Logs de auditoria para emissões.
+*   Dependências: Sprint 1 concluída.
+*   Resultado Esperado: Sistema capaz de emitir e rastrear APACs individualmente.
+
+Sprint 3: Emissão em Lote + Relatórios Básicos
+*   Duração: 5-6 Semanas
+*   Funcionalidades:
+    *   Funcionalidade de emissão de APACs em lote a partir de uma faixa.
+    *   Exportação de dados de APACs em formato TXT.
+    *   Relatórios básicos sobre o uso das APACs.
+    *   Melhorias na interface do dashboard com gráficos simples.
+*   Dependências: Sprint 2 concluída.
+*   Resultado Esperado: Sistema com capacidade de emissão em massa e relatórios para gestão.
+
+Sprint 4: Expansões e Melhorias
+*   Duração: 7-8 Semanas (e além)
+*   Funcionalidades:
+    *   Integração com impressoras magnéticas (se aplicável e viável no Replit).
+    *   Gerenciamento de Prestadores (CRUD).
+    *   APIs para integração com outros sistemas.
+    *   Melhorias de performance e segurança.
+    *   Testes unitários e de integração mais robustos.
+*   Dependências: Sprints anteriores concluídas.
+*   Resultado Esperado: Sistema maduro e integrado, pronto para produção.
+
+SEÇÃO 11: PADRÕES DE SEGURANÇA
+
+A segurança será uma preocupação constante, mesmo em PHP puro. As seguintes práticas serão implementadas:
+
+*   Prepared Statements: Todas as interações com o banco de dados usarão prepared statements via PDO para prevenir ataques de SQL Injection.
+*   htmlspecialchars() em Outputs: Todos os dados exibidos na interface do usuário serão escapados usando htmlspecialchars() para prevenir ataques de Cross-Site Scripting (XSS).
+*   password_hash() e password_verify(): Senhas de usuários serão armazenadas de forma segura usando password_hash() e verificadas com password_verify(), evitando o armazenamento de senhas em texto claro.
+*   Validação Frontend E Backend: A validação de dados será realizada tanto no lado do cliente (JavaScript/HTML5) para feedback rápido ao usuário, quanto no lado do servidor (PHP) para garantir a integridade dos dados e a segurança.
+*   Autenticação Obrigatória: Todas as rotas que exigem acesso restrito terão uma verificação de autenticação (AuthService::guard()) para garantir que apenas usuários logados e autorizados possam acessá-las.
+*   CSRF Tokens (Futuro): Para formulários que realizam ações críticas (POST, PUT, DELETE), tokens CSRF (Cross-Site Request Forgery) serão implementados para proteger contra ataques de falsificação de requisição entre sites.
+*   Rate Limiting Básico (Futuro): Implementação de um controle básico de requisições para endpoints de login ou emissão para mitigar ataques de força bruta.
+*   Variáveis de Ambiente: Credenciais sensíveis (banco de dados, chaves de API) serão armazenadas em variáveis de ambiente (.env) e acessadas via getenv(), nunca diretamente no código.
+
+SEÇÃO 12: BOAS PRÁTICAS DE CÓDIGO
+
+Para garantir a qualidade e a manutenibilidade do código, as seguintes boas práticas serão adotadas:
+
+*   Convenções de Nomenclatura: Seguir padrões PSR (PHP Standard Recommendations) para nomes de classes, métodos, variáveis e arquivos.
+*   Estrutura de Pastas Lógica: Manter a estrutura de pastas definida na SEÇÃO 5, garantindo que cada tipo de arquivo esteja em seu devido lugar.
+*   Comentários e Documentação: Adicionar comentários claros e concisos em blocos de código complexos, classes e métodos, explicando sua finalidade e funcionamento.
+*   Funções e Classes Pequenas: Manter funções e classes com uma única responsabilidade (Single Responsibility Principle - SRP).
+*   Tratamento de Erros e Exceções: Utilizar blocos try-catch para lidar com erros esperados e lançar exceções para condições anormais.
+*   Autoloading: Utilizar o autoloader do Composer (se instalado) ou um autoloader simples em PHP puro para carregar classes automaticamente.
+*   Controle de Versão (Git): Utilizar Git para controle de versão, com commits atômicos e mensagens claras.
+
+SEÇÃO 13: PRÓXIMAS AÇÕES RECOMENDADAS
+
+Para iniciar o desenvolvimento de forma eficaz, siga estes passos:
+
+1.  Apresentar Documento ao Desenvolvedor: Compartilhe este prompt detalhado com a equipe de desenvolvimento para garantir alinhamento e compreensão do escopo.
+2.  Criar Conta/Projeto no Replit: O desenvolvedor deve criar uma conta no Replit.com e iniciar um novo Repl com o template "PHP Web Server".
+3.  Seguir os 10 Passos Sequencialmente: Execute os passos da SEÇÃO 9 na ordem, testando cada etapa antes de prosseguir.
+4.  Testar a Cada Passo: A verificação de sucesso em cada passo é crucial para identificar e corrigir problemas precocemente.
+5.  Fornecer Feedback Contínuo: Mantenha um canal de comunicação aberto com o desenvolvedor, fornecendo feedback e esclarecendo dúvidas, especialmente após a conclusão do Sprint 1.
+
+SEÇÃO 14: DICAS E TROUBLESHOOTING
+
+*   Como Debugar:
+    *   var_dump() e die(): Para inspecionar variáveis e interromper a execução em pontos específicos.
+    *   error_log(): Para registrar mensagens de erro ou depuração em um arquivo de log (verifique logs/php_errors.log ou o log do Replit).
+    *   Replit Console: O terminal do Replit exibirá erros do PHP e saídas de echo/print.
+*   Problemas Comuns com MySQL:
+    *   Credenciais Incorretas: Verifique config/database.php e .env.
+    *   Host/Porta Incorretos: Certifique-se de que o host e a porta do MySQL estão acessíveis do ambiente Replit.
+    *   Banco de Dados Não Existe: Crie o banco de dados antes de executar o schema.sql.
+    *   Permissões: O usuário do MySQL precisa ter permissões para acessar o banco de dados.
+*   Como Reconectar ao MySQL se Cair:
+    *   Se a conexão PDO cair (ex: após um período de inatividade), a classe Database pode precisar de uma lógica de reconexão. Para o MVP, reiniciar o servidor PHP ou a aplicação geralmente resolve.
+*   Performance Tips:
+    *   Índices no MySQL: Garanta que as colunas usadas em WHERE e JOIN tenham índices (já incluído no schema.sql).
+       Consultas Otimizadas: Evite SELECT  em loops e carregue apenas os dados necessários.
+    *   Cache (Futuro): Para dados frequentemente acessados, considere implementar um cache simples (ex: em arquivos ou memória).
+*   Logs e Monitoramento:
+    *   Utilize a pasta logs/ para armazenar logs de erro e de aplicação.
+    *   No Replit, o console é a principal ferramenta de monitoramento em tempo real.
