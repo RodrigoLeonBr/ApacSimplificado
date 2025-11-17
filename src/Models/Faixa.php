@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Models;
+
+use App\Database\Database;
+
+class Faixa
+{
+    private $db;
+    private $table = 'faixas';
+    
+    public function __construct()
+    {
+        $this->db = Database::getInstance();
+    }
+    
+    public function findAll()
+    {
+        $sql = "SELECT * FROM {$this->table} ORDER BY id DESC";
+        return $this->db->fetchAll($sql);
+    }
+    
+    public function findById($id)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE id = :id LIMIT 1";
+        return $this->db->fetchOne($sql, ['id' => $id]);
+    }
+    
+    public function findDisponiveis()
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE status IN ('disponivel', 'em_uso') ORDER BY id DESC";
+        return $this->db->fetchAll($sql);
+    }
+    
+    public function create($data)
+    {
+        $sql = "INSERT INTO {$this->table} (inicial_13dig, final_13dig, quantidade, status) 
+                VALUES (:inicial_13dig, :final_13dig, :quantidade, :status)";
+        
+        $params = [
+            'inicial_13dig' => $data['inicial_13dig'],
+            'final_13dig' => $data['final_13dig'],
+            'quantidade' => $data['quantidade'],
+            'status' => $data['status'] ?? 'disponivel'
+        ];
+        
+        $this->db->execute($sql, $params);
+        return $this->db->lastInsertId();
+    }
+    
+    public function update($id, $data)
+    {
+        $fields = [];
+        $params = ['id' => $id];
+        
+        foreach ($data as $key => $value) {
+            $fields[] = "{$key} = :{$key}";
+            $params[$key] = $value;
+        }
+        
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";
+        $this->db->execute($sql, $params);
+        
+        return true;
+    }
+    
+    public function delete($id)
+    {
+        $sql = "DELETE FROM {$this->table} WHERE id = :id";
+        $this->db->execute($sql, ['id' => $id]);
+        return true;
+    }
+    
+    public function countApacsEmitidas($id)
+    {
+        $sql = "SELECT COUNT(*) as total FROM apacs WHERE faixa_id = :id";
+        $result = $this->db->fetchOne($sql, ['id' => $id]);
+        return $result['total'] ?? 0;
+    }
+}
