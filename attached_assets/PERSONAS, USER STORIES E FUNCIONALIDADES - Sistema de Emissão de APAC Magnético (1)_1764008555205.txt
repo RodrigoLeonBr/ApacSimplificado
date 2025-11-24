@@ -1,0 +1,464 @@
+PERSONAS, USER STORIES E FUNCIONALIDADES - Sistema de Emissão de APAC Magnético
+
+SUMÁRIO EXECUTIVO
+
+Este documento tem como objetivo detalhar as personas-chave que interagirão com o Sistema de Emissão de APAC Magnético, suas necessidades, dores e objetivos. A partir dessa análise, são derivadas histórias de usuário (User Stories) que guiarão o desenvolvimento das funcionalidades, garantindo que o sistema atenda de forma eficaz aos requisitos dos usuários finais. Além disso, são apresentados fluxos de trabalho, cenários de uso e requisitos não-funcionais específicos, culminando em um roadmap de implementação focado no valor para cada persona.
+
+As três personas identificadas e seus papéis essenciais para o sistema são:
+
+*   Ana Claudia - Técnica Administrativa da Saúde: Usuária operacional que realiza a emissão diária das APACs.
+*   João Silva - Supervisor/Gestor de APACs: Usuário gerencial responsável pela supervisão, relatórios e auditoria.
+*   Pedro Costa - Administrador de TI: Usuário técnico que garante a infraestrutura, segurança e conformidade do sistema.
+
+1. ANÁLISE DE PERSONAS
+
+Persona 1: Ana Claudia - Técnica Administrativa da Saúde
+
+*   Dados Demográficos: 38 anos, Técnica em Regulação e Controle
+*   Local: Secretaria Municipal de Saúde (cidade de médio porte)
+*   Responsabilidades: Receber laudos, cadastrar pacientes, emitir APACs, controlar estoque de números, prestar contas.
+*   Necessidades & Dores:
+    *   Evitar erros de digitação que invalidem APAC.
+    *   Agilizar o preenchimento de formulários complexos.
+    *   Garantir a numeração correta e sequencial das APACs.
+    *   Consultar CIDs e procedimentos rapidamente.
+    *   Cumprir prazos apertados com confiabilidade.
+*   Objetivos:
+    *   Emitir APACs válidas e precisas rapidamente.
+    *   Ter um controle organizado e automático de faixas de numeração.
+    *   Reduzir o retrabalho e as solicitações de correção.
+*   Frequência de Uso: Diária (50-100 APACs/dia).
+*   Nível Técnico: Intermediário.
+*   Pain Points (5): Validação manual de dados, falta de consultas integradas (CID, procedimentos), controle manual de faixas, formulários longos e repetitivos, erros na sequência de numeração.
+
+Persona 2: João Silva - Supervisor/Gestor de APACs
+
+*   Dados Demográficos: 45 anos, Supervisor de Controle.
+*   Local: Secretaria Municipal de Saúde (mesmo contexto).
+*   Responsabilidades: Supervisionar emissões, gerar relatórios para prestação de contas ao estado, treinar técnicos, garantir a conformidade dos processos.
+*   Necessidades & Dores:
+    *   Ter visibilidade total das APACs emitidas e seu status.
+    *   Gerar relatórios rápidos e precisos para prestação de contas.
+    *   Detectar anomalias ou erros nas emissões.
+    *   Controlar permissões de usuários para acesso e ações.
+    *   Auditar todas as ações realizadas no sistema.
+*   Objetivos:
+    *   Ter um dashboard com métricas em tempo real.
+    *   Gerar relatórios paramétricos (por período, usuário, procedimento).
+    *   Garantir a rastreabilidade completa das APACs.
+    *   Implementar controle de acesso baseado em perfis (roles).
+*   Frequência de Uso: Diária (2-3 horas).
+*   Nível Técnico: Intermediário-Avançado.
+*   Pain Points (5): Falta de visibilidade operacional, relatórios manuais e demorados, ausência de trilha de auditoria, permissões de usuário centralizadas e inflexíveis, métricas de desempenho lentas para obtenção.
+
+Persona 3: Pedro Costa - Administrador de TI
+
+*   Dados Demográficos: 35 anos, TI da Secretaria.
+*   Local: TI/Infraestrutura da Secretaria Municipal.
+*   Responsabilidades: Manter o sistema operacional, gerenciar backups, garantir a segurança da informação, prestar suporte técnico aos usuários.
+*   Necessidades & Dores:
+    *   Garantir a disponibilidade 24/7 do sistema.
+    *   Proteger dados sensíveis de saúde em conformidade com a LGPD.
+    *   Monitorar a performance do sistema proativamente.
+    *   Implementar backups automáticos e confiáveis.
+    *   Oferecer suporte técnico eficiente aos usuários.
+*   Objetivos:
+    *   Ter um sistema robusto, resiliente e de alta disponibilidade.
+    *   Garantir a conformidade total com a LGPD.
+    *   Manter logs de auditoria completos e acessíveis.
+    *   Facilitar a manutenção e as atualizações do sistema.
+*   Frequência de Uso: Contínua (monitoramento e intervenções pontuais).
+*   Nível Técnico: Avançado.
+*   Pain Points (5): Gerenciamento de dados sensíveis, risco de downtime, desafios de compliance com a LGPD, backups manuais e suscetíveis a falhas, suporte reativo a problemas.
+
+2. MATRIX DE PERSONAS vs FUNCIONALIDADES
+
+Esta seção descreve as funcionalidades mais relevantes para cada persona, indicando seu foco principal no sistema.
+
+*   Ana Claudia:
+    *   Cadastro de Faixa de APAC
+    *   Emissão Individual de APAC
+    *   Consulta de CID/Procedimento
+    *   Validação de Dados (CNS, CPF)
+    *   Impressão de APAC
+*   João Silva:
+    *   Dashboard com Métricas
+    *   Geração de Relatórios Paramétricos
+    *   Logs de Auditoria
+    *   Filtros Avançados de Busca
+    *   Gestão de Permissões de Usuários
+*   Pedro Costa:
+    *   Logs de Auditoria
+    *   Gerenciamento de Backups
+    *   Configurações de Segurança
+    *   Monitoramento de Performance
+    *   Ferramentas de Compliance LGPD
+
+3. HISTÓRIAS DE USUÁRIO DETALHADAS
+
+Epic 1: Gestão de Faixas APAC
+
+US-001: Como Ana Claudia, quero cadastrar uma nova faixa de APAC (número inicial + número final) para que o sistema controle a numeração disponível.
+
+*   Critério de aceitação:
+    *   Cenário 1: Ao informar um número inicial e final válidos (13 dígitos numéricos), o sistema deve registrar a faixa e calcular a quantidade de APACs disponíveis.
+    *   Cenário 2: Ao tentar cadastrar uma faixa que se sobrepõe a uma existente, o sistema deve exibir uma mensagem de erro e impedir o cadastro.
+    *   Cenário 3: Ao informar números com menos ou mais de 13 dígitos, o sistema deve exibir uma mensagem de validação.
+*   Fluxo esperado: Acessar "Faixas de APAC" -> Clicar em "Nova Faixa" -> Preencher "Número Inicial" e "Número Final" -> Clicar em "Salvar".
+*   Regras de negócio: Os números inicial e final devem ter exatamente 13 dígitos. O número inicial deve ser menor que o número final. Faixas não podem se sobrepor.
+
+US-002: Como Ana Claudia, quero que o sistema use sempre o próximo número disponível de uma faixa para garantir a sequência correta.
+
+*   Critério de aceitação:
+    *   Cenário 1: Ao emitir uma APAC, o sistema deve automaticamente sugerir o próximo número sequencial da faixa selecionada.
+    *   Cenário 2: Se a faixa selecionada estiver esgotada, o sistema deve impedir a emissão e notificar o usuário.
+    *   Cenário 3: Se houver lacunas na sequência (ex: APAC cancelada), o sistema deve preencher a lacuna antes de usar o próximo número.
+*   Fluxo esperado: Selecionar uma faixa para emissão -> Sistema preenche automaticamente o campo "Número da APAC (13 dígitos)".
+*   Regras de negócio: O sistema deve manter um contador para cada faixa. Lacunas devem ser preenchidas por ordem crescente.
+
+US-003: Como João Silva, quero visualizar todas as faixas de APAC e seu status (disponível, em uso, esgotada) para monitorar o estoque de números.
+
+*   Critério de aceitação:
+    *   Cenário 1: O dashboard ou tela de "Faixas de APAC" deve exibir uma lista com todas as faixas cadastradas.
+    *   Cenário 2: Cada faixa deve mostrar o número inicial, número final, quantidade total, quantidade utilizada e o status atual.
+    *   Cenário 3: O status deve ser atualizado em tempo real conforme as APACs são emitidas.
+    *   Cenário 4: Deve ser possível filtrar as faixas por status.
+*   Fluxo esperado: Acessar "Dashboard" ou "Faixas de APAC" -> Visualizar a tabela de faixas.
+*   Regras de negócio: Status "Disponível" (0% usado), "Em Uso" (0% < usado < 100%), "Esgotada" (100% usado).
+
+Epic 2: Cadastro e Validação de Pacientes
+
+US-004: Como Ana Claudia, quero validar o número do CNS (Cartão Nacional de Saúde) em tempo real para evitar erros de cadastro.
+
+*   Critério de aceitação:
+    *   Cenário 1: Ao digitar um CNS válido, o sistema deve indicar que o número está correto.
+    *   Cenário 2: Ao digitar um CNS inválido (ex: dígito verificador incorreto, formato errado), o sistema deve exibir uma mensagem de erro e impedir o avanço.
+    *   Cenário 3: A validação deve ocorrer enquanto o usuário digita (on-the-fly) ou ao sair do campo.
+    *   Cenário 4: O sistema deve seguir o algoritmo oficial de validação do CNS.
+    *   Cenário 5: Se o campo for deixado em branco e não for obrigatório, o sistema deve permitir o avanço sem erro.
+*   Fluxo esperado: Preencher campo "CNS" -> Sistema valida automaticamente.
+*   Regras de negócio: Validação conforme algoritmo do Ministério da Saúde.
+
+US-005: Como Ana Claudia, quero buscar um paciente já cadastrado usando a tecla F2 para agilizar o preenchimento dos dados.
+
+*   Critério de aceitação:
+    *   Cenário 1: Ao pressionar F2 no campo "Nome do Paciente" (ou similar), uma janela de busca deve ser aberta.
+    *   Cenário 2: A janela de busca deve permitir pesquisar por nome, CNS ou CPF do paciente.
+    *   Cenário 3: Ao selecionar um paciente na busca, seus dados (nome, CNS, CPF, data de nascimento, etc.) devem ser preenchidos automaticamente no formulário.
+    *   Cenário 4: Se nenhum paciente for encontrado, a janela de busca deve informar e permitir o fechamento.
+*   Fluxo esperado: No formulário de emissão, pressionar F2 -> Buscar paciente -> Selecionar paciente -> Dados preenchidos.
+*   Regras de negócio: A busca deve ser eficiente e retornar resultados rapidamente.
+
+US-006: Como Ana Claudia, quero que o CPF do paciente seja validado automaticamente para garantir a integridade dos dados.
+
+*   Critério de aceitação:
+    *   Cenário 1: Ao digitar um CPF válido, o sistema deve aceitar o número.
+    *   Cenário 2: Ao digitar um CPF inválido (ex: dígitos verificadores incorretos, sequência repetida), o sistema deve exibir uma mensagem de erro.
+    *   Cenário 3: A validação deve ocorrer ao sair do campo ou ao tentar salvar o formulário.
+*   Fluxo esperado: Preencher campo "CPF" -> Sistema valida automaticamente.
+*   Regras de negócio: Validação conforme algoritmo de CPF.
+
+Epic 3: Preenchimento do Laudo e Autorização
+
+US-007: Como Ana Claudia, quero buscar um CID (Classificação Internacional de Doenças) por código ou descrição para preencher o laudo rapidamente.
+
+*   Critério de aceitação:
+    *   Cenário 1: Ao digitar parte do código ou da descrição do CID, o sistema deve apresentar sugestões em uma lista suspensa.
+    *   Cenário 2: Ao selecionar um CID da lista, o campo deve ser preenchido com o código e a descrição completa.
+    *   Cenário 3: A busca deve ser rápida, retornando resultados em menos de 500ms.
+    *   Cenário 4: Se nenhum CID corresponder à busca, o sistema deve informar.
+*   Fluxo esperado: No campo "CID", digitar "C40" -> Sistema sugere "C40 - Neoplasia maligna dos ossos e cartilagens articulares dos membros" -> Selecionar.
+*   Regras de negócio: A base de dados de CIDs deve estar atualizada.
+
+US-008: Como Ana Claudia, quero que o dígito verificador (DV) da APAC seja calculado automaticamente para garantir a validade do número completo.
+
+*   Critério de aceitação:
+    *   Cenário 1: Após o sistema gerar o número de 13 dígitos da APAC, o DV deve ser calculado e anexado automaticamente, formando o número de 14 dígitos.
+    *   Cenário 2: O DV deve seguir o algoritmo de sequência cíclica especificado.
+    *   Cenário 3: O número completo (14 dígitos) deve ser exibido para confirmação.
+    *   Cenário 4: Se houver alguma falha no cálculo, o sistema deve notificar o usuário.
+    *   Cenário 5: O DV deve ser recalculado se o número base de 13 dígitos for alterado manualmente (se permitido).
+    *   Cenário 6: O sistema deve validar o DV de uma APAC já existente se for necessário editá-la.
+*   Fluxo esperado: Sistema gera 13 dígitos -> Sistema calcula e anexa DV -> Exibe APAC completa.
+*   Regras de negócio: O algoritmo de DV deve ser implementado conforme a especificação.
+
+US-009: Como Ana Claudia, quero definir a data de validade da APAC para controlar o período de uso da autorização.
+
+*   Critério de aceitação:
+    *   Cenário 1: O sistema deve permitir selecionar uma data de validade futura para a APAC.
+    *   Cenário 2: A data de validade não pode ser anterior à data de emissão.
+    *   Cenário 3: O sistema pode sugerir uma data de validade padrão (ex: 30 dias após a emissão).
+    *   Cenário 4: Se a data de validade for excedida, o sistema deve marcar a APAC como "Expirada" e impedir seu uso.
+*   Fluxo esperado: No formulário de emissão, selecionar "Data de Validade" no calendário.
+*   Regras de negócio: A data de validade é um campo obrigatório.
+
+Epic 4: Segurança e Compliance
+
+US-010: Como João Silva, quero visualizar um log de auditoria completo de todas as ações no sistema para rastrear atividades e investigar incidentes.
+
+*   Critério de aceitação:
+    *   Cenário 1: O log deve registrar o usuário, data/hora, tipo de ação (cadastro, edição, exclusão, emissão, login), e detalhes da ação (ex: "APAC 35258072811117 emitida").
+    *   Cenário 2: Deve ser possível filtrar o log por usuário, período, tipo de ação e texto livre.
+    *   Cenário 3: O log deve ser acessível apenas para usuários com permissão de supervisor ou administrador.
+    *   Cenário 4: O log deve ser imutável, ou seja, registros não podem ser alterados ou excluídos.
+    *   Cenário 5: O log deve ser exportável para formatos como CSV ou PDF.
+*   Fluxo esperado: Acessar "Logs de Auditoria" -> Aplicar filtros -> Visualizar resultados.
+*   Regras de negócio: Todos os eventos críticos devem ser logados.
+
+US-011: Como Pedro Costa, quero que o sistema garanta a conformidade com a LGPD para proteger os dados sensíveis dos pacientes.
+
+*   Critério de aceitação:
+    *   Cenário 1: Dados sensíveis (ex: nome completo, CPF, CNS, informações de saúde) devem ser armazenados de forma criptografada no banco de dados.
+    *   Cenário 2: O sistema deve implementar controle de acesso rigoroso, garantindo que apenas usuários autorizados acessem dados sensíveis.
+    *   Cenário 3: Deve haver um mecanismo para atender ao "direito ao esquecimento" (anonimização ou exclusão de dados, conforme a lei).
+    *   Cenário 4: Todas as operações com dados sensíveis devem ser registradas no log de auditoria.
+*   Fluxo esperado: Monitorar relatórios de segurança -> Verificar logs de acesso a dados sensíveis.
+*   Regras de negócio: Criptografia AES-256 para dados em repouso. Implementação de políticas de privacidade e termos de uso.
+
+US-012: Como Pedro Costa, quero que os backups do sistema sejam automáticos e confiáveis para garantir a recuperação de dados em caso de falha.
+
+*   Critério de aceitação:
+    *   Cenário 1: O sistema deve realizar backups completos do banco de dados e arquivos diariamente.
+    *   Cenário 2: Os backups devem ser armazenados em um local seguro e redundante (ex: armazenamento em nuvem).
+    *   Cenário 3: O sistema deve manter um histórico de backups com retenção de pelo menos 90 dias.
+    *   Cenário 4: Deve haver um processo documentado e testado para restauração de backups.
+*   Fluxo esperado: Verificar logs de backup -> Testar restauração periodicamente.
+*   Regras de negócio: RPO (Recovery Point Objective) de 24 horas, RTO (Recovery Time Objective) de 2 horas.
+
+4. FLUXOS DE TRABALHO DETALHADOS
+
+4.1 Fluxo Completo de Emissão de APAC (Ana Claudia)
+
+1.  Acesso ao Sistema: Ana Claudia faz login no sistema com suas credenciais.
+2.  Seleção de Faixa Disponível: No menu "Emissão de APAC", o sistema exibe as faixas disponíveis. Ana Claudia seleciona uma faixa.
+3.  Preenchimento de Dados do Paciente: Ana Claudia preenche os campos de identificação do paciente (Nome, CNS, CPF, Data de Nascimento). O sistema valida CNS e CPF em tempo real.
+4.  Validação de Dados: O sistema verifica a integridade e validade dos dados do paciente.
+5.  Preenchimento do Laudo: Ana Claudia preenche os detalhes do laudo, incluindo o CID principal e procedimentos.
+6.  Consulta CID/Procedimento: Durante o preenchimento, Ana Claudia utiliza a funcionalidade de busca para encontrar CIDs e procedimentos.
+7.  Geração da APAC (com DV): O sistema gera automaticamente o número de 13 dígitos da APAC, calcula o Dígito Verificador (DV) e exibe o número completo de 14 dígitos.
+8.  Impressão: Ana Claudia confirma a emissão e o sistema marca a APAC como "Pendente de Impressão" ou inicia o processo de impressão, se configurado.
+
+4.2 Fluxo de Supervisão e Relatório (João Silva)
+
+1.  Acesso ao Dashboard: João Silva faz login e acessa o dashboard principal do sistema.
+2.  Visualização de Métricas: No dashboard, ele visualiza as métricas em tempo real sobre APACs emitidas, faixas em uso e status geral.
+3.  Geração de Relatório: João Silva navega para a seção de "Relatórios".
+4.  Aplicação de Filtros: Ele aplica filtros por período, usuário, tipo de procedimento ou status da APAC para refinar os dados.
+5.  Exportação de Dados: Após gerar o relatório, ele exporta os dados para um formato adequado (ex: PDF, CSV) para análise externa.
+6.  Envio ao Estado: O relatório exportado é utilizado para a prestação de contas ao órgão estadual.
+
+4.3 Fluxo de Monitoramento e Manutenção (Pedro Costa)
+
+1.  Monitoramento de Performance: Pedro Costa utiliza ferramentas externas ou o próprio sistema para monitorar a performance (uso de CPU, memória, tempo de resposta) do servidor onde o sistema está hospedado.
+2.  Verificação de Logs: Ele acessa os logs de sistema e de auditoria para identificar anomalias, erros ou tentativas de acesso não autorizado.
+3.  Backup Automático: Pedro Costa verifica se os backups diários foram executados com sucesso e se estão armazenados corretamente.
+4.  Alertas de Segurança: Ele configura e responde a alertas de segurança gerados pelo sistema ou por ferramentas de monitoramento de infraestrutura.
+5.  Escalação de Problemas: Em caso de problemas críticos (ex: downtime, falha de segurança), Pedro Costa segue o protocolo de escalonamento para resolver a questão.
+
+5. MAPA DE FUNCIONALIDADES vs PERSONAS
+
+Esta matriz indica a importância de cada funcionalidade para as personas, usando os níveis Alta, Média e Baixa.
+
+*   Cadastro de Faixa de APAC:
+    *   Ana Claudia: Alta
+    *   João Silva: Média
+    *   Pedro Costa: Baixa
+*   Emissão Individual de APAC:
+    *   Ana Claudia: Alta
+    *   João Silva: Média
+    *   Pedro Costa: Baixa
+*   Consulta de CID/Procedimento:
+    *   Ana Claudia: Alta
+    *   João Silva: Baixa
+    *   Pedro Costa: Baixa
+*   Validação de Dados (CNS, CPF):
+    *   Ana Claudia: Alta
+    *   João Silva: Média
+    *   Pedro Costa: Média
+*   Impressão de APAC:
+    *   Ana Claudia: Alta
+    *   João Silva: Média
+    *   Pedro Costa: Baixa
+*   Dashboard com Métricas:
+    *   Ana Claudia: Média
+    *   João Silva: Alta
+    *   Pedro Costa: Média
+*   Geração de Relatórios Paramétricos:
+    *   Ana Claudia: Baixa
+    *   João Silva: Alta
+    *   Pedro Costa: Média
+*   Logs de Auditoria:
+    *   Ana Claudia: Baixa
+    *   João Silva: Alta
+    *   Pedro Costa: Alta
+*   Filtros Avançados de Busca:
+    *   Ana Claudia: Média
+    *   João Silva: Alta
+    *   Pedro Costa: Média
+*   Gestão de Permissões de Usuários:
+    *   Ana Claudia: Baixa
+    *   João Silva: Alta
+    *   Pedro Costa: Média
+*   Gerenciamento de Backups:
+    *   Ana Claudia: Baixa
+    *   João Silva: Baixa
+    *   Pedro Costa: Alta
+*   Configurações de Segurança:
+    *   Ana Claudia: Baixa
+    *   João Silva: Média
+    *   Pedro Costa: Alta
+*   Monitoramento de Performance:
+    *   Ana Claudia: Baixa
+    *   João Silva: Baixa
+    *   Pedro Costa: Alta
+*   Ferramentas de Compliance LGPD:
+    *   Ana Claudia: Baixa
+    *   João Silva: Média
+    *   Pedro Costa: Alta
+
+6. CENÁRIOS DE USO DETALHADOS
+
+Cenário 1: Dia Normal de Ana Claudia
+
+Ana Claudia chega ao trabalho às 8h. Após fazer login no sistema, ela verifica o dashboard para ver o status das faixas de APAC. Ela tem 50 laudos para processar hoje. Ela começa a emitir APACs, usando a busca por F2 para pacientes já cadastrados e preenchendo os dados do laudo. O sistema calcula o DV automaticamente e ela imprime as APACs. Por volta das 10h, ela percebe que uma faixa está quase esgotada e notifica seu supervisor. À tarde, ela continua o processo, garantindo que todas as APACs sejam emitidas e impressas antes do fim do expediente. O sistema a ajuda a evitar erros de digitação e a manter a sequência numérica, reduzindo seu estresse e retrabalho.
+
+Cenário 2: Fim de Mês - João Silva Gerando Relatório
+
+É o último dia útil do mês e João Silva precisa gerar o relatório de APACs emitidas para a prestação de contas ao estado. Ele acessa o sistema, vai à seção de relatórios e seleciona o período do mês corrente. Ele filtra por tipo de procedimento e verifica se há alguma APAC com status "pendente de impressão". Após revisar os dados no próprio sistema, ele clica em "Exportar para PDF" e envia o documento para o setor responsável. O processo, que antes levava horas com planilhas manuais, agora é concluído em minutos.
+
+Cenário 3: Integração com Sistema do Estado (Futuro)
+
+Embora não seja uma funcionalidade inicial, este cenário descreve como o sistema se integraria. Após a emissão e impressão de um lote de APACs, o sistema gera um arquivo TXT padronizado. João Silva, ou um processo automático, envia este arquivo para o sistema do estado. O sistema do estado processa o arquivo, validando os números de APAC e os dados dos pacientes. Em caso de erros, o sistema do estado retorna um relatório que João Silva pode consultar para identificar e corrigir as APACs problemáticas no sistema local.
+
+Cenário 4: Tratamento de Erro - CNS Inválido
+
+Ana Claudia está cadastrando um novo paciente e digita o número do CNS. Por engano, ela troca um dos dígitos. Assim que ela sai do campo, o sistema exibe uma mensagem de erro em vermelho: "CNS inválido. Verifique o número digitado." Ana Claudia percebe o erro, corrige o número e o sistema valida, permitindo que ela continue o preenchimento do formulário. Isso evita que uma APAC seja emitida com dados incorretos, que seria rejeitada posteriormente.
+
+Cenário 5: Auditoria Interna - Pedro Investigando Anomalia
+
+Pedro Costa recebe um alerta de que houve um pico incomum de emissões de APACs em um determinado horário. Ele acessa o log de auditoria do sistema, filtra por data e hora e identifica o usuário responsável pelas emissões. Ele verifica os detalhes das APACs emitidas e cruza com outras informações. Se necessário, ele pode gerar um relatório detalhado das atividades daquele usuário para uma investigação mais aprofundada, garantindo a segurança e a integridade dos dados.
+
+7. REQUISITOS NÃO-FUNCIONAIS ESPECÍFICOS POR PERSONA
+
+Para Ana Claudia
+
+*   Performance: O tempo de resposta para buscas de paciente e CID/procedimento deve ser inferior a 2 segundos.
+*   Usabilidade: A interface deve ser intuitiva, permitindo que as principais ações (cadastro de faixa, emissão de APAC) sejam realizadas com no máximo 5 cliques.
+*   Acessibilidade: O sistema deve seguir as diretrizes WCAG 2.1 Nível AA para garantir que usuários com deficiência possam utilizá-lo.
+*   Confiabilidade: O sistema deve ter um uptime de 99.5% durante o horário comercial.
+
+Para João Silva
+
+*   Performance: O dashboard deve carregar todas as métricas em menos de 3 segundos.
+*   Escalabilidade: O sistema deve ser capaz de gerenciar 1 milhão de registros de APACs sem degradação perceptível de performance.
+*   Relatórios: A geração e exportação de relatórios complexos (com múltiplos filtros) deve ser concluída em menos de 30 segundos.
+*   Segurança: O acesso à área de gestão e relatórios deve exigir autenticação de dois fatores (2FA).
+
+Para Pedro Costa
+
+*   Backup: O RPO (Recovery Point Objective) deve ser de 24 horas e o RTO (Recovery Time Objective) de 2 horas.
+*   Logs: Os logs de auditoria e sistema devem ser retidos por um período mínimo de 2 anos.
+*   Segurança: Todos os dados sensíveis (CNS, CPF, nome completo do paciente) devem ser criptografados usando AES-256 no banco de dados.
+*   Compliance: O sistema deve ser 100% auditável para conformidade com a LGPD, com relatórios de acesso a dados sensíveis.
+
+8. CRITÉRIOS DE SUCESSO E MÉTRICAS
+
+Métricas por Persona
+
+Ana Claudia:
+*   Tempo médio para emissão de APAC: Redução de 60% (de 8 para 3 minutos por APAC).
+*   Taxa de erro na emissão: Inferior a 0.5% (erros que invalidam a APAC).
+*   Satisfação do usuário (NPS): Net Promoter Score (NPS) acima de 70.
+*   Uso de atalhos de teclado: Mais de 80% dos usuários avançados utilizando atalhos.
+
+João Silva:
+*   Tempo para gerar relatório mensal: Inferior a 5 minutos.
+*   Acurácia dos dados em relatórios: 100% de conformidade com os dados do sistema.
+*   Tempo de resposta para consultas de auditoria: Inferior a 100ms para filtros básicos.
+*   Cobertura de auditoria: 100% das ações críticas registradas.
+
+Pedro Costa:
+*   Uptime do sistema: 99.5% mensal.
+*   Tempo de execução de backup completo: Inferior a 30 minutos.
+*   Alertas falsos de segurança: Inferior a 5% do total de alertas.
+*   LGPD compliance: 100% de conformidade em auditorias internas e externas.
+
+9. ROADMAP DE IMPLEMENTAÇÃO
+
+O desenvolvimento do sistema será dividido em fases, priorizando as funcionalidades que entregam maior valor para cada persona, de forma iterativa e incremental.
+
+*   Fase 1 (V1.0) - Foco Ana Claudia (MVP Operacional):
+    *   Autenticação e Gestão de Usuários.
+    *   Cadastro e Controle de Faixas de APAC.
+    *   Emissão Individual de APAC (com DV automático).
+    *   Validação de CNS e CPF.
+    *   Busca de CID/Procedimento.
+    *   Impressão de APAC.
+    *   Dashboard básico (para Ana Claudia e João Silva).
+*   Fase 2 (V1.1) - Foco João Silva (Gestão e Relatórios):
+    *   Dashboard com métricas avançadas.
+    *   Geração de Relatórios Paramétricos (por período, usuário, etc.).
+    *   Logs de Auditoria completos.
+    *   Filtros e Busca Avançada de APACs.
+    *   Gestão de Permissões de Usuários (Roles).
+*   Fase 3 (V1.2) - Foco Pedro Costa (Segurança e Manutenção):
+    *   Ferramentas de Compliance LGPD (criptografia, anonimização).
+    *   Gerenciamento de Backups (interface e monitoramento).
+    *   Configurações de Segurança avançadas.
+    *   Monitoramento de Performance (integração com ferramentas de TI).
+*   Fase 4+ (Expansões):
+    *   Emissão em Lote de APACs.
+    *   Exportação em formato TXT para integração com sistemas externos.
+    *   Gestão de Prestadores de Serviço.
+    *   API REST para integração externa.
+    *   Histórico de Alterações de APACs.
+    *   Cancelamento de APAC com justificativa.
+
+10. APÊNDICES
+
+A. Dicionário de Termos de Saúde
+
+*   APAC: Autorização de Procedimentos de Alta Complexidade.
+*   SUS: Sistema Único de Saúde.
+*   CNS: Cartão Nacional de Saúde.
+*   CID: Classificação Internacional de Doenças.
+*   DV: Dígito Verificador.
+*   LGPD: Lei Geral de Proteção de Dados.
+*   RPO: Recovery Point Objective (Objetivo de Ponto de Recuperação).
+*   RTO: Recovery Time Objective (Objetivo de Tempo de Recuperação).
+
+B. Exemplos de APACs Válidas e Inválidas
+
+*   Válida: 35258072811117 (13 dígitos + DV 7)
+*   Inválida (DV incorreto): 35258072811118 (DV deveria ser 7)
+*   Inválida (formato): 352580728111 (apenas 12 dígitos)
+
+C. Template de User Story
+
+*   Como: [Tipo de usuário/Persona]
+*   Quero: [Realizar uma ação]
+*   Para que: [Obter um benefício/resultado]
+*   Critérios de Aceitação:
+    *   [Cenário 1]
+    *   [Cenário 2]
+    *   ...
+*   Fluxo Esperado:
+    *   [Passo 1]
+    *   [Passo 2]
+    *   ...
+*   Regras de Negócio:
+    *   [Regra 1]
+    *   [Regra 2]
+    *   ...
+
+D. Guia de Testes por Persona
+
+*   Ana Claudia: Testes de usabilidade, validação de formulários, fluxo de emissão, impressão.
+*   João Silva: Testes de relatórios, filtros, dashboard, gestão de usuários, logs.
+*   Pedro Costa: Testes de segurança (injeção SQL, XSS), backup/restauração, performance, conformidade LGPD.
+
+E. Contatos para Validação com Usuários Reais
+
+*   Ana Claudia (Técnica): [Nome e contato do usuário real para validação]
+*   João Silva (Supervisor): [Nome e contato do usuário real para validação]
+*   Pedro Costa (TI): [Nome e contato do usuário real para validação]
