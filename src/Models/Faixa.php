@@ -34,13 +34,15 @@ class Faixa
     
     public function create($data)
     {
-        $sql = "INSERT INTO {$this->table} (inicial_13dig, final_13dig, quantidade, status) 
-                VALUES (:inicial_13dig, :final_13dig, :quantidade, :status)";
+        $sql = "INSERT INTO {$this->table} (numero_inicial, numero_final, quantidade, total, utilizados, status) 
+                VALUES (:numero_inicial, :numero_final, :quantidade, :total, :utilizados, :status)";
         
         $params = [
-            'inicial_13dig' => $data['inicial_13dig'],
-            'final_13dig' => $data['final_13dig'],
+            'numero_inicial' => $data['numero_inicial'] ?? $data['inicial_13dig'] ?? null,
+            'numero_final' => $data['numero_final'] ?? $data['final_13dig'] ?? null,
             'quantidade' => $data['quantidade'],
+            'total' => $data['total'] ?? $data['quantidade'],
+            'utilizados' => $data['utilizados'] ?? 0,
             'status' => $data['status'] ?? 'disponivel'
         ];
         

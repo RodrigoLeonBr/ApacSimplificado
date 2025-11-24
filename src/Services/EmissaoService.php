@@ -49,10 +49,10 @@ class EmissaoService
             $numero14dig = $this->dvService->gerarNumeroCompleto($proximoNumero);
             
             $apacId = $this->apacModel->create([
-                'numero_14dig' => $numero14dig,
+                'numero_apac' => $numero14dig,
                 'digito_verificador' => substr($numero14dig, 13, 1),
                 'faixa_id' => $faixaId,
-                'emitido_por_usuario_id' => $usuarioId
+                'usuario_id' => $usuarioId
             ]);
             
             $this->faixaModel->update($faixaId, ['status' => 'em_uso']);
@@ -60,7 +60,7 @@ class EmissaoService
             $this->logModel->create([
                 'acao' => 'Emissão de APAC',
                 'usuario_id' => $usuarioId,
-                'tabela_afetada' => 'apacs',
+                'tabela' => 'apacs',
                 'registro_id' => $apacId,
                 'detalhes' => "APAC {$numero14dig} emitida da faixa {$faixaId}"
             ]);
@@ -84,14 +84,14 @@ class EmissaoService
     
     private function obterProximoNumeroDisponivel($faixa)
     {
-        $inicial = (int) $faixa['inicial_13dig'];
-        $final = (int) $faixa['final_13dig'];
+        $inicial = (int) $faixa['numero_inicial'];
+        $final = (int) $faixa['numero_final'];
         
         $apacsEmitidas = $this->apacModel->findByFaixaId($faixa['id']);
         
         $numerosEmitidos = [];
         foreach ($apacsEmitidas as $apac) {
-            $numerosEmitidos[] = (int) substr($apac['numero_14dig'], 0, 13);
+            $numerosEmitidos[] = (int) substr($apac['numero_apac'], 0, 13);
         }
         
         for ($i = $inicial; $i <= $final; $i++) {
@@ -111,7 +111,7 @@ class EmissaoService
             $this->logModel->create([
                 'acao' => 'Marcação de impressão',
                 'usuario_id' => $usuarioId,
-                'tabela_afetada' => 'apacs',
+                'tabela' => 'apacs',
                 'registro_id' => $apacId,
                 'detalhes' => "APAC marcada como impressa"
             ]);

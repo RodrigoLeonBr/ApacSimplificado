@@ -34,14 +34,14 @@ class Usuario
     
     public function create($data)
     {
-        $sql = "INSERT INTO {$this->table} (email, password, nome, role, ativo) 
-                VALUES (:email, :password, :nome, :role, :ativo)";
+        $sql = "INSERT INTO {$this->table} (email, senha_hash, nome, role, ativo) 
+                VALUES (:email, :senha_hash, :nome, :role, :ativo)";
         
-        $ativo = isset($data['ativo']) ? ($data['ativo'] ? 'true' : 'false') : 'true';
+        $ativo = isset($data['ativo']) ? ($data['ativo'] ? 1 : 0) : 1;
         
         $params = [
             'email' => $data['email'],
-            'password' => password_hash($data['password'], PASSWORD_BCRYPT),
+            'senha_hash' => password_hash($data['password'], PASSWORD_BCRYPT),
             'nome' => $data['nome'],
             'role' => $data['role'] ?? 'user',
             'ativo' => $ativo
@@ -58,13 +58,13 @@ class Usuario
         
         foreach ($data as $key => $value) {
             if ($key === 'password') {
-                $fields[] = "password = :password";
-                $params['password'] = password_hash($value, PASSWORD_BCRYPT);
+                $fields[] = "senha_hash = :senha_hash";
+                $params['senha_hash'] = password_hash($value, PASSWORD_BCRYPT);
             } else {
                 $fields[] = "{$key} = :{$key}";
                 
                 if ($key === 'ativo' && is_bool($value)) {
-                    $params[$key] = $value ? 'true' : 'false';
+                    $params[$key] = $value ? 1 : 0;
                 } else {
                     $params[$key] = $value;
                 }

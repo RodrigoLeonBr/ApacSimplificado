@@ -27,7 +27,7 @@ class AuthService
             return ['success' => false, 'message' => 'Usuário inativo.'];
         }
         
-        if (!password_verify($password, $usuario['password'])) {
+        if (!password_verify($password, $usuario['senha_hash'])) {
             return ['success' => false, 'message' => 'Credenciais inválidas.'];
         }
         
