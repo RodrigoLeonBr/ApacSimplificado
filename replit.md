@@ -30,6 +30,12 @@ The system uses a simplified MVC architecture implemented in pure PHP 8.3.
     -   **ApacService**: Manages APAC number generation using cyclic sequence "78900123456" for check digit calculation via modulo 11. Methods include gerarNumeroApac (13→14 digits), calcularDigitoVerificador, validarNumeroApac, obterProximoNumeroDisponivel (with automatic faixa status management), and verificarDuplicidade.
     -   **LaudoService**: Orchestrates complete laudo emission within PDO transactions. Supports both existing patients (via paciente_id) and new patient creation (via paciente array). Flow: validate data → beginTransaction → create/fetch patient (with CNS/CPF/date validation via ValidacaoService and data sanitization) → create laudo → optionally generate APAC → link APAC to laudo → commit. All operations wrapped in try/catch with automatic rollback on errors.
 -   **UI/UX Decisions**: The system leverages Tailwind CSS for utility-first styling and Alpine.js for lightweight interactivity, aiming for a clean and functional interface.
+-   **View System**: Modern, responsive views with hierarchical navigation:
+    -   **Navigation**: Collapsible sidebar with 5 main sections (Dashboard, Laudos e APACs, Cadastros, Gerencial, Configurações), responsive mobile menu with drawer, contextual breadcrumbs with dynamic ID resolution
+    -   **Laudos Views**: Multi-tab form for creation (4 steps: Paciente → Laudo → Autorização → Resumo), listing with AJAX search and pagination, detailed view with action sidebar
+    -   **Pacientes Views**: Complete CRUD with 4 views (index with real-time AJAX search, create with CNS/CPF validation, edit with ViaCEP integration, show with laudo history card showing last 5 records), all forms include Brazilian document validation (CNS/CPF) and automatic address completion via ViaCEP API
+    -   **Relatórios Views**: Statistics dashboard with filters, export buttons (PDF/Excel), chart placeholders
+    -   **Logs Views**: Activity audit table with filtering, pagination, timestamped user actions
 
 ## External Dependencies
 -   **Database**: MySQL 5.7 (hosted remotely)
