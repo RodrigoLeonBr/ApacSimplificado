@@ -2,17 +2,9 @@
 
 namespace App\Models;
 
-use App\Database\Database;
-
-class Log
+class Log extends BaseModel
 {
-    private $db;
-    private $table = 'logs';
-    
-    public function __construct()
-    {
-        $this->db = Database::getInstance();
-    }
+    protected $table = 'logs';
     
     public function findAll($limit = 100)
     {
@@ -40,9 +32,6 @@ class Log
     
     public function create($data)
     {
-        $sql = "INSERT INTO {$this->table} (acao, usuario_id, tabela, registro_id, detalhes) 
-                VALUES (:acao, :usuario_id, :tabela, :registro_id, :detalhes)";
-        
         $params = [
             'acao' => $data['acao'],
             'usuario_id' => $data['usuario_id'] ?? null,
@@ -51,7 +40,12 @@ class Log
             'detalhes' => $data['detalhes'] ?? null
         ];
         
-        $this->db->execute($sql, $params);
+        $this->db->execute(
+            "INSERT INTO {$this->table} (acao, usuario_id, tabela, registro_id, detalhes) 
+             VALUES (:acao, :usuario_id, :tabela, :registro_id, :detalhes)",
+            $params
+        );
+        
         return $this->db->lastInsertId();
     }
     

@@ -2,17 +2,9 @@
 
 namespace App\Models;
 
-use App\Database\Database;
-
-class Apac
+class Apac extends BaseModel
 {
-    private $db;
-    private $table = 'apacs';
-    
-    public function __construct()
-    {
-        $this->db = Database::getInstance();
-    }
+    protected $table = 'apacs';
     
     public function findAll()
     {
@@ -48,9 +40,6 @@ class Apac
     
     public function create($data)
     {
-        $sql = "INSERT INTO {$this->table} (numero_apac, digito_verificador, faixa_id, usuario_id, impresso) 
-                VALUES (:numero_apac, :digito_verificador, :faixa_id, :usuario_id, :impresso)";
-        
         $impresso = isset($data['impresso']) ? ($data['impresso'] ? 1 : 0) : 0;
         
         $params = [
@@ -61,7 +50,12 @@ class Apac
             'impresso' => $impresso
         ];
         
-        $this->db->execute($sql, $params);
+        $this->db->execute(
+            "INSERT INTO {$this->table} (numero_apac, digito_verificador, faixa_id, usuario_id, impresso) 
+             VALUES (:numero_apac, :digito_verificador, :faixa_id, :usuario_id, :impresso)",
+            $params
+        );
+        
         return $this->db->lastInsertId();
     }
     
@@ -72,24 +66,12 @@ class Apac
         
         foreach ($data as $key => $value) {
             $fields[] = "{$key} = :{$key}";
-            
-            if ($key === 'impresso' && is_bool($value)) {
-                $params[$key] = $value ? 1 : 0;
-            } else {
-                $params[$key] = $value;
-            }
+            $params[$key] = ($key === 'impresso' && is_bool($value)) ? ($value ? 1 : 0) : $value;
         }
         
         $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE id = :id";
         $this->db->execute($sql, $params);
         
-        return true;
-    }
-    
-    public function delete($id)
-    {
-        $sql = "DELETE FROM {$this->table} WHERE id = :id";
-        $this->db->execute($sql, ['id' => $id]);
         return true;
     }
     
