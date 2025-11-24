@@ -15,32 +15,32 @@ ob_start();
         <div class="space-y-3">
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">ID:</span>
-                <span class="text-gray-900"><?= $faixa['id'] ?></span>
+                <span class="text-gray-900"><?= htmlspecialchars($faixa['id']) ?></span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">Número Inicial:</span>
-                <span class="text-gray-900 font-mono"><?= $faixa['inicial_13dig'] ?></span>
+                <span class="text-gray-900 font-mono"><?= htmlspecialchars($faixa['numero_inicial']) ?></span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">Número Final:</span>
-                <span class="text-gray-900 font-mono"><?= $faixa['final_13dig'] ?></span>
+                <span class="text-gray-900 font-mono"><?= htmlspecialchars($faixa['numero_final']) ?></span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">Quantidade Total:</span>
-                <span class="text-gray-900"><?= number_format($faixa['quantidade']) ?></span>
+                <span class="text-gray-900"><?= number_format($faixa['total']) ?></span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">APACs Emitidas:</span>
-                <span class="text-gray-900"><?= number_format($faixa['apacs_emitidas']) ?></span>
+                <span class="text-gray-900"><?= number_format($faixa['utilizados']) ?></span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">APACs Disponíveis:</span>
-                <span class="text-gray-900"><?= number_format($faixa['quantidade'] - $faixa['apacs_emitidas']) ?></span>
+                <span class="text-gray-900"><?= number_format($faixa['total'] - $faixa['utilizados']) ?></span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
@@ -60,14 +60,14 @@ ob_start();
                     ][$faixa['status']] ?? $faixa['status'];
                     ?>
                     <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $statusClass ?>">
-                        <?= $statusLabel ?>
+                        <?= htmlspecialchars($statusLabel) ?>
                     </span>
                 </span>
             </div>
             
             <div class="flex justify-between border-b pb-2">
                 <span class="font-medium text-gray-700">Data de Criação:</span>
-                <span class="text-gray-900"><?= date('d/m/Y H:i', strtotime($faixa['criada_em'])) ?></span>
+                <span class="text-gray-900"><?= htmlspecialchars(date('d/m/Y H:i', strtotime($faixa['criada_em']))) ?></span>
             </div>
         </div>
         
@@ -90,13 +90,13 @@ ob_start();
             <div class="flex justify-between mb-2">
                 <span class="text-sm font-medium text-gray-700">Percentual de Uso</span>
                 <span class="text-sm font-medium text-gray-700">
-                    <?= round(($faixa['apacs_emitidas'] / $faixa['quantidade']) * 100, 2) ?>%
+                    <?= htmlspecialchars(round(($faixa['utilizados'] / $faixa['total']) * 100, 2)) ?>%
                 </span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-4">
                 <div 
                     class="bg-blue-600 h-4 rounded-full transition-all" 
-                    style="width: <?= round(($faixa['apacs_emitidas'] / $faixa['quantidade']) * 100, 2) ?>%"
+                    style="width: <?= round(($faixa['utilizados'] / $faixa['total']) * 100, 2) ?>%"
                 ></div>
             </div>
         </div>
@@ -104,19 +104,19 @@ ob_start();
         <div class="grid grid-cols-2 gap-4 mt-6">
             <div class="bg-blue-50 p-4 rounded-lg">
                 <p class="text-sm text-gray-600">Total</p>
-                <p class="text-2xl font-bold text-blue-600"><?= number_format($faixa['quantidade']) ?></p>
+                <p class="text-2xl font-bold text-blue-600"><?= number_format($faixa['total']) ?></p>
             </div>
             <div class="bg-green-50 p-4 rounded-lg">
                 <p class="text-sm text-gray-600">Emitidas</p>
-                <p class="text-2xl font-bold text-green-600"><?= number_format($faixa['apacs_emitidas']) ?></p>
+                <p class="text-2xl font-bold text-green-600"><?= number_format($faixa['utilizados']) ?></p>
             </div>
             <div class="bg-yellow-50 p-4 rounded-lg">
                 <p class="text-sm text-gray-600">Disponíveis</p>
-                <p class="text-2xl font-bold text-yellow-600"><?= number_format($faixa['quantidade'] - $faixa['apacs_emitidas']) ?></p>
+                <p class="text-2xl font-bold text-yellow-600"><?= number_format($faixa['total'] - $faixa['utilizados']) ?></p>
             </div>
             <div class="bg-purple-50 p-4 rounded-lg">
                 <p class="text-sm text-gray-600">% Uso</p>
-                <p class="text-2xl font-bold text-purple-600"><?= round(($faixa['apacs_emitidas'] / $faixa['quantidade']) * 100, 2) ?>%</p>
+                <p class="text-2xl font-bold text-purple-600"><?= htmlspecialchars(round(($faixa['utilizados'] / $faixa['total']) * 100, 2)) ?>%</p>
             </div>
         </div>
     </div>

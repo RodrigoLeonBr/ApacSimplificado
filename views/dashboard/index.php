@@ -13,7 +13,7 @@ ob_start();
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-500 text-sm">Total de Faixas</p>
-                <p class="text-3xl font-bold text-blue-600"><?= $stats['total_faixas'] ?></p>
+                <p class="text-3xl font-bold text-blue-600"><?= htmlspecialchars($stats['total_faixas']) ?></p>
             </div>
             <div class="bg-blue-100 rounded-full p-3">
                 <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,7 +27,7 @@ ob_start();
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-500 text-sm">Faixas Disponíveis</p>
-                <p class="text-3xl font-bold text-green-600"><?= $stats['faixas_disponiveis'] ?></p>
+                <p class="text-3xl font-bold text-green-600"><?= htmlspecialchars($stats['faixas_disponiveis']) ?></p>
             </div>
             <div class="bg-green-100 rounded-full p-3">
                 <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@ ob_start();
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-500 text-sm">APACs Emitidas</p>
-                <p class="text-3xl font-bold text-purple-600"><?= $stats['total_apacs'] ?></p>
+                <p class="text-3xl font-bold text-purple-600"><?= htmlspecialchars($stats['total_apacs']) ?></p>
             </div>
             <div class="bg-purple-100 rounded-full p-3">
                 <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@ ob_start();
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-gray-500 text-sm">APACs Impressas</p>
-                <p class="text-3xl font-bold text-orange-600"><?= $stats['apacs_impressas'] ?></p>
+                <p class="text-3xl font-bold text-orange-600"><?= htmlspecialchars($stats['apacs_impressas']) ?></p>
             </div>
             <div class="bg-orange-100 rounded-full p-3">
                 <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,8 +86,8 @@ ob_start();
                     <?php else: ?>
                         <?php foreach ($recentApacs as $apac): ?>
                             <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 text-sm"><?= htmlspecialchars($apac['numero_14dig']) ?></td>
-                                <td class="py-2 text-sm"><?= date('d/m/Y H:i', strtotime($apac['data_emissao'])) ?></td>
+                                <td class="py-2 text-sm"><?= htmlspecialchars($apac['numero_apac']) ?></td>
+                                <td class="py-2 text-sm"><?= htmlspecialchars(date('d/m/Y H:i', strtotime($apac['criada_em']))) ?></td>
                                 <td class="py-2 text-sm">
                                     <?php if ($apac['impresso']): ?>
                                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Impressa</span>

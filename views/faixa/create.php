@@ -13,36 +13,36 @@ ob_start();
 <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl">
     <form method="POST" action="/faixas">
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="inicial_13dig">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="numero_inicial">
                 Número Inicial (13 dígitos)
             </label>
             <input 
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono"
-                id="inicial_13dig" 
-                name="inicial_13dig" 
+                id="numero_inicial" 
+                name="numero_inicial" 
                 type="text" 
                 placeholder="0000000000000"
                 maxlength="13"
                 pattern="[0-9]{13}"
-                value="<?= htmlspecialchars($old['inicial_13dig'] ?? '') ?>"
+                value="<?= htmlspecialchars($old['numero_inicial'] ?? '') ?>"
                 required
             >
             <p class="text-xs text-gray-500 mt-1">Digite exatamente 13 dígitos numéricos</p>
         </div>
         
         <div class="mb-6">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="final_13dig">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="numero_final">
                 Número Final (13 dígitos)
             </label>
             <input 
                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono"
-                id="final_13dig" 
-                name="final_13dig" 
+                id="numero_final" 
+                name="numero_final" 
                 type="text" 
                 placeholder="0000000000000"
                 maxlength="13"
                 pattern="[0-9]{13}"
-                value="<?= htmlspecialchars($old['final_13dig'] ?? '') ?>"
+                value="<?= htmlspecialchars($old['numero_final'] ?? '') ?>"
                 required
             >
             <p class="text-xs text-gray-500 mt-1">Digite exatamente 13 dígitos numéricos</p>

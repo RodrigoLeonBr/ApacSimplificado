@@ -35,12 +35,12 @@ ob_start();
             <?php else: ?>
                 <?php foreach ($apacs as $apac): ?>
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $apac['id'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-blue-600"><?= $apac['numero_14dig'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900"><?= $apac['digito_verificador'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#<?= $apac['faixa_id'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($apac['emitido_por'] ?? 'Sistema') ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= date('d/m/Y H:i', strtotime($apac['data_emissao'])) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($apac['id']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-blue-600"><?= htmlspecialchars($apac['numero_apac']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900"><?= htmlspecialchars($apac['digito_verificador']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#<?= htmlspecialchars($apac['faixa_id']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($apac['usuario_nome'] ?? 'Sistema') ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars(date('d/m/Y H:i', strtotime($apac['criada_em']))) ?></td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <?php if ($apac['impresso']): ?>
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -54,7 +54,7 @@ ob_start();
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <?php if (!$apac['impresso']): ?>
-                                <form method="POST" action="/apacs/<?= $apac['id'] ?>/imprimir" style="display: inline;">
+                                <form method="POST" action="/apacs/<?= htmlspecialchars($apac['id']) ?>/imprimir" style="display: inline;">
                                     <button type="submit" class="text-green-600 hover:text-green-900">Marcar Impressa</button>
                                 </form>
                             <?php else: ?>

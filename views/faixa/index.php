@@ -35,17 +35,17 @@ ob_start();
             <?php else: ?>
                 <?php foreach ($faixas as $faixa): ?>
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= $faixa['id'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900"><?= $faixa['inicial_13dig'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900"><?= $faixa['final_13dig'] ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= number_format($faixa['quantidade']) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= number_format($faixa['apacs_emitidas']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= htmlspecialchars($faixa['id']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900"><?= htmlspecialchars($faixa['numero_inicial']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900"><?= htmlspecialchars($faixa['numero_final']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= number_format($faixa['total']) ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= number_format($faixa['utilizados']) ?></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <div class="flex items-center">
                                 <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
                                     <div class="bg-blue-600 h-2 rounded-full" style="width: <?= $faixa['percentual_uso'] ?>%"></div>
                                 </div>
-                                <span><?= $faixa['percentual_uso'] ?>%</span>
+                                <span><?= htmlspecialchars($faixa['percentual_uso']) ?>%</span>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -63,13 +63,13 @@ ob_start();
                             ][$faixa['status']] ?? $faixa['status'];
                             ?>
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $statusClass ?>">
-                                <?= $statusLabel ?>
+                                <?= htmlspecialchars($statusLabel) ?>
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="/faixas/<?= $faixa['id'] ?>" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
-                            <?php if ($faixa['apacs_emitidas'] == 0): ?>
-                                <form method="POST" action="/faixas/<?= $faixa['id'] ?>/delete" style="display: inline;">
+                            <a href="/faixas/<?= htmlspecialchars($faixa['id']) ?>" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
+                            <?php if ($faixa['utilizados'] == 0): ?>
+                                <form method="POST" action="/faixas/<?= htmlspecialchars($faixa['id']) ?>/delete" style="display: inline;">
                                     <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Deseja realmente excluir esta faixa?')">Excluir</button>
                                 </form>
                             <?php endif; ?>

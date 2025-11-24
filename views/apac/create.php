@@ -31,10 +31,10 @@ ob_start();
                 >
                     <option value="">Selecione uma faixa...</option>
                     <?php foreach ($faixas as $faixa): ?>
-                        <option value="<?= $faixa['id'] ?>">
-                            Faixa #<?= $faixa['id'] ?> - 
-                            <?= $faixa['inicial_13dig'] ?> a <?= $faixa['final_13dig'] ?> 
-                            (<?= $faixa['status'] === 'disponivel' ? 'Disponível' : 'Em Uso' ?>)
+                        <option value="<?= htmlspecialchars($faixa['id']) ?>">
+                            Faixa #<?= htmlspecialchars($faixa['id']) ?> - 
+                            <?= htmlspecialchars($faixa['numero_inicial']) ?> a <?= htmlspecialchars($faixa['numero_final']) ?> 
+                            (<?= htmlspecialchars($faixa['status'] === 'disponivel' ? 'Disponível' : 'Em Uso') ?>)
                         </option>
                     <?php endforeach; ?>
                 </select>
