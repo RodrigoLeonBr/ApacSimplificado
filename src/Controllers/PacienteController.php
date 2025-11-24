@@ -19,10 +19,19 @@ class PacienteController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $pacientes = $this->pacienteModel->findAll();
+        $page = (int) ($_GET['page'] ?? 1);
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
         
-        $this->render('pacientes.index', [
+        $pacientes = $this->pacienteModel->findPaginated($limit, $offset);
+        $total = $this->pacienteModel->countTotal();
+        $totalPages = ceil($total / $limit);
+        
+        $this->render('pacientes/index', [
             'pacientes' => $pacientes,
+            'totalPacientes' => $total,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'flash' => $this->getFlash()
         ]);
     }
@@ -38,8 +47,11 @@ class PacienteController extends BaseController
             $this->redirect('/pacientes');
         }
         
-        $this->render('pacientes.show', [
+        $laudos = $this->pacienteModel->getLaudos($id);
+        
+        $this->render('pacientes/show', [
             'paciente' => $paciente,
+            'laudos' => $laudos,
             'flash' => $this->getFlash()
         ]);
     }
@@ -48,7 +60,7 @@ class PacienteController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $this->render('pacientes.create', [
+        $this->render('pacientes/create', [
             'flash' => $this->getFlash()
         ]);
     }
@@ -92,7 +104,7 @@ class PacienteController extends BaseController
             $this->redirect('/pacientes');
         }
         
-        $this->render('pacientes.edit', [
+        $this->render('pacientes/edit', [
             'paciente' => $paciente,
             'flash' => $this->getFlash()
         ]);
@@ -158,17 +170,27 @@ class PacienteController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $termo = $this->getInput('termo', '');
+        $q = $_GET['q'] ?? '';
+        $page = (int) ($_GET['page'] ?? 1);
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
         
-        if (strlen($termo) < 3) {
-            $this->jsonResponse(['success' => false, 'message' => 'Digite ao menos 3 caracteres']);
+        if (strlen($q) === 0) {
+            $pacientes = $this->pacienteModel->findPaginated($limit, $offset);
+            $total = $this->pacienteModel->countTotal();
+        } else {
+            $pacientes = $this->pacienteModel->searchPaginated($q, $limit, $offset);
+            $total = $this->pacienteModel->searchCount($q);
         }
         
-        $pacientes = $this->pacienteModel->search($termo);
+        $totalPages = ceil($total / $limit);
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $pacientes
+            'pacientes' => $pacientes,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
     

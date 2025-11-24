@@ -12,6 +12,7 @@ use App\Controllers\EstabelecimentoController;
 use App\Controllers\ProfissionalController;
 use App\Controllers\CaraterAtendimentoController;
 use App\Controllers\LaudoController;
+use App\Controllers\ApiController;
 
 $router = new Router();
 
@@ -38,6 +39,27 @@ $router->get('/logout', function() {
 $router->get('/dashboard', function() {
     $controller = new DashboardController();
     $controller->index();
+});
+
+// API Routes
+$router->get('/api/validar-cns', function() {
+    $controller = new ApiController();
+    $controller->validarCns();
+});
+
+$router->get('/api/validar-cpf', function() {
+    $controller = new ApiController();
+    $controller->validarCpf();
+});
+
+$router->get('/api/validar-cep', function() {
+    $controller = new ApiController();
+    $controller->validarCep();
+});
+
+$router->get('/api/validar-email', function() {
+    $controller = new ApiController();
+    $controller->validarEmail();
 });
 
 $router->get('/faixas', function() {
