@@ -20,7 +20,10 @@ The system uses a simplified MVC architecture implemented in pure PHP 8.3.
     -   **APAC Range Management (Faixas)**: Full CRUD operations for managing 13-digit APAC number ranges, including status tracking (Available, In Use, Exhausted) and automatic quantity calculation.
     -   **APAC Issuance**: Individual APAC issuance, automatic 14-digit number generation (13 digits + DV), cyclic algorithm for Dígito Verificador (DV) calculation, duplicate prevention, and sequential control within ranges.
     -   **Logging & Audit**: Automatic logging of all significant actions (e.g., range creation, APAC issuance, print status updates) with user and timestamp details.
--   **Design Patterns**: An abstract `BaseModel` class centralizes generic CRUD logic for all specialized models, promoting DRY principles, maintainability, and scalability.
+-   **Design Patterns**: 
+    -   **BaseModel**: An abstract class that centralizes generic CRUD logic for all specialized models, promoting DRY principles, maintainability, and scalability.
+    -   **BaseController**: Abstract controller class with common methods (`render()`, `redirect()`, `jsonResponse()`, `flash()`) and helper utilities (`getFlash()`, `isAjax()`, `getMethod()`, `getInput()`). Accepts optional Database instance in constructor for dependency injection while defaulting to singleton pattern.
+    -   **AuthMiddleware**: Centralized authentication middleware with session management, providing methods like `handle()` for route protection, `getLoggedInUser()` for user data retrieval, `isAuthenticated()` for auth checks, and `checkPermission()` for role-based access control. Automatically differentiates between web (redirect) and API (JSON 401) requests.
 -   **UI/UX Decisions**: The system leverages Tailwind CSS for utility-first styling and Alpine.js for lightweight interactivity, aiming for a clean and functional interface.
 
 ## External Dependencies
