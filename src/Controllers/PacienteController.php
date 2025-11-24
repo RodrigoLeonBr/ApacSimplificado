@@ -19,13 +19,14 @@ class PacienteController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $page = (int) ($_GET['page'] ?? 1);
+        $page = max(1, (int) ($_GET['page'] ?? 1));
         $limit = 10;
+        $total = $this->pacienteModel->countTotal();
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         $offset = ($page - 1) * $limit;
         
         $pacientes = $this->pacienteModel->findPaginated($limit, $offset);
-        $total = $this->pacienteModel->countTotal();
-        $totalPages = ceil($total / $limit);
         
         $this->render('pacientes/index', [
             'pacientes' => $pacientes,
@@ -171,7 +172,7 @@ class PacienteController extends BaseController
         AuthMiddleware::handle();
         
         $q = $_GET['q'] ?? '';
-        $page = (int) ($_GET['page'] ?? 1);
+        $page = max(1, (int) ($_GET['page'] ?? 1));
         $limit = 10;
         $offset = ($page - 1) * $limit;
         
@@ -183,7 +184,8 @@ class PacienteController extends BaseController
             $total = $this->pacienteModel->searchCount($q);
         }
         
-        $totalPages = ceil($total / $limit);
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         
         $this->jsonResponse([
             'success' => true,

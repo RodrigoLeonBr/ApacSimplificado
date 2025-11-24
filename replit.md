@@ -33,7 +33,12 @@ The system uses a simplified MVC architecture implemented in pure PHP 8.3.
 -   **View System**: Modern, responsive views with hierarchical navigation:
     -   **Navigation**: Collapsible sidebar with 5 main sections (Dashboard, Laudos e APACs, Cadastros, Gerencial, Configurações), responsive mobile menu with drawer, contextual breadcrumbs with dynamic ID resolution
     -   **Laudos Views**: Multi-tab form for creation (4 steps: Paciente → Laudo → Autorização → Resumo), listing with AJAX search and pagination, detailed view with action sidebar
-    -   **Pacientes Views**: Complete CRUD with 4 views (index with real-time AJAX search, create with CNS/CPF validation, edit with ViaCEP integration, show with laudo history card showing last 5 records), all forms include Brazilian document validation (CNS/CPF) and automatic address completion via ViaCEP API
+    -   **Pacientes Views**: Complete CRUD with 4 views (index with real-time AJAX search and pagination, create with CNS/CPF validation, edit with ViaCEP integration, show with laudo history card showing last 5 records), all forms include Brazilian document validation (CNS/CPF) and automatic address completion via ViaCEP API. The AJAX search implementation includes:
+        -   **Real-time Search**: Debounced search input (500ms) that searches across CNS, CPF, and patient name fields
+        -   **Pagination**: Client-side pagination with 10 records per page, showing page numbers and navigation controls
+        -   **Loading States**: Visual feedback during search operations with spinner indicator
+        -   **Empty States**: User-friendly messages when no patients are found
+        -   **API Endpoint**: `/pacientes/ajax/search` accepting `q` (search term) and `page` parameters, returning JSON with `pacientes`, `total`, `totalPages`, and `currentPage`
     -   **Relatórios Views**: Statistics dashboard with filters, export buttons (PDF/Excel), chart placeholders
     -   **Logs Views**: Activity audit table with filtering, pagination, timestamped user actions
 
