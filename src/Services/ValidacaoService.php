@@ -1,0 +1,183 @@
+<?php
+
+namespace App\Services;
+
+class ValidacaoService
+{
+    public static function validarCpf($cpf)
+    {
+        if (empty($cpf)) {
+            return false;
+        }
+        
+        $cpf = preg_replace('/[^0-9]/', '', $cpf);
+        
+        if (strlen($cpf) != 11) {
+            return false;
+        }
+        
+        if (preg_match('/(\d)\1{10}/', $cpf)) {
+            return false;
+        }
+        
+        for ($t = 9; $t < 11; $t++) {
+            $d = 0;
+            for ($c = 0; $c < $t; $c++) {
+                $d += $cpf[$c] * (($t + 1) - $c);
+            }
+            $d = ((10 * $d) % 11) % 10;
+            if ($cpf[$c] != $d) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    public static function validarCns($cns)
+    {
+        if (empty($cns)) {
+            return false;
+        }
+        
+        $cns = preg_replace('/[^0-9]/', '', $cns);
+        
+        if (strlen($cns) != 15) {
+            return false;
+        }
+        
+        $firstDigit = substr($cns, 0, 1);
+        
+        if (in_array($firstDigit, ['1', '2'])) {
+            return self::validarCnsInicia12($cns);
+        } elseif (in_array($firstDigit, ['7', '8', '9'])) {
+            return self::validarCnsInicia789($cns);
+        }
+        
+        return false;
+    }
+    
+    private static function validarCnsInicia12($cns)
+    {
+        $pis = substr($cns, 0, 11);
+        $soma = 0;
+        
+        for ($i = 0; $i < 11; $i++) {
+            $soma += $pis[$i] * (15 - $i);
+        }
+        
+        $resto = $soma % 11;
+        $dv = $resto == 0 ? 0 : 11 - $resto;
+        
+        if ($dv == 10) {
+            $soma += 2;
+            $resto = $soma % 11;
+            $dv = $resto == 0 ? 0 : 11 - $resto;
+        }
+        
+        $resultado = $pis . sprintf('%04d', $dv);
+        
+        return $resultado === $cns;
+    }
+    
+    private static function validarCnsInicia789($cns)
+    {
+        $soma = 0;
+        for ($i = 0; $i < 15; $i++) {
+            $soma += $cns[$i] * (15 - $i);
+        }
+        
+        return ($soma % 11) == 0;
+    }
+    
+    public static function validarCep($cep)
+    {
+        if (empty($cep)) {
+            return false;
+        }
+        
+        $cep = preg_replace('/[^0-9]/', '', $cep);
+        
+        if (strlen($cep) != 8) {
+            return false;
+        }
+        
+        if (preg_match('/^0{8}$/', $cep)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    public static function validarData($data)
+    {
+        if (empty($data)) {
+            return false;
+        }
+        
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $data, $matches)) {
+            $ano = (int) $matches[1];
+            $mes = (int) $matches[2];
+            $dia = (int) $matches[3];
+            
+            return checkdate($mes, $dia, $ano);
+        }
+        
+        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $data, $matches)) {
+            $dia = (int) $matches[1];
+            $mes = (int) $matches[2];
+            $ano = (int) $matches[3];
+            
+            return checkdate($mes, $dia, $ano);
+        }
+        
+        return false;
+    }
+    
+    public static function validarEmail($email)
+    {
+        if (empty($email)) {
+            return false;
+        }
+        
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+    
+    public static function limparCpf($cpf)
+    {
+        return preg_replace('/[^0-9]/', '', $cpf);
+    }
+    
+    public static function limparCns($cns)
+    {
+        return preg_replace('/[^0-9]/', '', $cns);
+    }
+    
+    public static function limparCep($cep)
+    {
+        return preg_replace('/[^0-9]/', '', $cep);
+    }
+    
+    public static function formatarData($data, $formato = 'Y-m-d')
+    {
+        if (empty($data)) {
+            return null;
+        }
+        
+        if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $data, $matches)) {
+            $dataObj = \DateTime::createFromFormat('d/m/Y', $data);
+            if ($dataObj) {
+                return $dataObj->format($formato);
+            }
+        }
+        
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $data)) {
+            $dataObj = \DateTime::createFromFormat('Y-m-d', $data);
+            if ($dataObj) {
+                return $dataObj->format($formato);
+            }
+        }
+        
+        return null;
+    }
+}
