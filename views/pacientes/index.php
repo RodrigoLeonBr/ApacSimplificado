@@ -30,7 +30,7 @@ ob_start();
          currentPage: 1,
          totalPages: 1,
          init() {
-             this.pacientes = <?= json_encode($pacientes ?? []) ?>;
+             this.pacientes = <?= json_encode($pacientes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
              this.totalPacientes = <?= $totalPacientes ?? 0 ?>;
              this.currentPage = <?= $currentPage ?? 1 ?>;
              this.totalPages = <?= $totalPages ?? 1 ?>;
