@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Estabelecimento;
 use App\Middleware\AuthMiddleware;
+use App\Services\ValidacaoService;
 
 class EstabelecimentoController extends BaseController
 {
@@ -19,10 +20,20 @@ class EstabelecimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $estabelecimentos = $this->estabelecimentoModel->findAll();
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $total = $this->estabelecimentoModel->countTotal();
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
+        $offset = ($page - 1) * $limit;
         
-        $this->render('estabelecimentos.index', [
+        $estabelecimentos = $this->estabelecimentoModel->findPaginated($limit, $offset);
+        
+        $this->render('estabelecimentos/index', [
             'estabelecimentos' => $estabelecimentos,
+            'totalEstabelecimentos' => $total,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'flash' => $this->getFlash()
         ]);
     }
@@ -38,8 +49,11 @@ class EstabelecimentoController extends BaseController
             $this->redirect('/estabelecimentos');
         }
         
-        $this->render('estabelecimentos.show', [
+        $laudos = $this->estabelecimentoModel->getLaudos($id, 10);
+        
+        $this->render('estabelecimentos/show', [
             'estabelecimento' => $estabelecimento,
+            'laudos' => $laudos,
             'flash' => $this->getFlash()
         ]);
     }
@@ -48,7 +62,11 @@ class EstabelecimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $this->render('estabelecimentos.create', [
+        $this->render('estabelecimentos/form', [
+            'estabelecimento' => null,
+            'action' => '/estabelecimentos',
+            'method' => 'POST',
+            'title' => 'Novo Estabelecimento',
             'flash' => $this->getFlash()
         ]);
     }
@@ -67,6 +85,11 @@ class EstabelecimentoController extends BaseController
         
         if ($this->estabelecimentoModel->findByCnes($data['cnes'])) {
             $this->flash('CNES já cadastrado no sistema', 'error');
+            $this->redirect('/estabelecimentos/create');
+        }
+        
+        if ($this->estabelecimentoModel->findByCnpj($data['cnpj'])) {
+            $this->flash('CNPJ já cadastrado no sistema', 'error');
             $this->redirect('/estabelecimentos/create');
         }
         
@@ -92,8 +115,11 @@ class EstabelecimentoController extends BaseController
             $this->redirect('/estabelecimentos');
         }
         
-        $this->render('estabelecimentos.edit', [
+        $this->render('estabelecimentos/form', [
             'estabelecimento' => $estabelecimento,
+            'action' => '/estabelecimentos/' . $id . '/update',
+            'method' => 'POST',
+            'title' => 'Editar Estabelecimento',
             'flash' => $this->getFlash()
         ]);
     }
@@ -123,6 +149,12 @@ class EstabelecimentoController extends BaseController
             $this->redirect('/estabelecimentos/' . $id . '/edit');
         }
         
+        $existing = $this->estabelecimentoModel->findByCnpj($data['cnpj']);
+        if ($existing && $existing['id'] != $id) {
+            $this->flash('CNPJ já cadastrado para outro estabelecimento', 'error');
+            $this->redirect('/estabelecimentos/' . $id . '/edit');
+        }
+        
         $updated = $this->estabelecimentoModel->update($id, $data);
         
         if ($updated) {
@@ -142,14 +174,18 @@ class EstabelecimentoController extends BaseController
         
         if (!$estabelecimento) {
             $this->jsonResponse(['success' => false, 'message' => 'Estabelecimento não encontrado'], 404);
+            return;
         }
         
-        $deleted = $this->estabelecimentoModel->delete($id);
-        
-        if ($deleted) {
-            $this->flash('Estabelecimento excluído com sucesso', 'success');
-            $this->jsonResponse(['success' => true, 'message' => 'Estabelecimento excluído com sucesso']);
-        } else {
+        try {
+            $deleted = $this->estabelecimentoModel->delete($id);
+            
+            if ($deleted) {
+                $this->jsonResponse(['success' => true, 'message' => 'Estabelecimento excluído com sucesso']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir estabelecimento'], 500);
+            }
+        } catch (\Exception $e) {
             $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir estabelecimento'], 500);
         }
     }
@@ -158,17 +194,28 @@ class EstabelecimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $termo = $this->getInput('termo', '');
+        $q = $_GET['q'] ?? '';
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
         
-        if (strlen($termo) < 2) {
-            $this->jsonResponse(['success' => false, 'message' => 'Digite ao menos 2 caracteres']);
+        if (strlen($q) === 0) {
+            $estabelecimentos = $this->estabelecimentoModel->findPaginated($limit, $offset);
+            $total = $this->estabelecimentoModel->countTotal();
+        } else {
+            $estabelecimentos = $this->estabelecimentoModel->searchPaginated($q, $limit, $offset);
+            $total = $this->estabelecimentoModel->searchCount($q);
         }
         
-        $estabelecimentos = $this->estabelecimentoModel->search($termo);
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $estabelecimentos
+            'estabelecimentos' => $estabelecimentos,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
     
@@ -176,22 +223,19 @@ class EstabelecimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $page = (int) $this->getInput('page', 1);
-        $limit = (int) $this->getInput('limit', 10);
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
         $offset = ($page - 1) * $limit;
         
-        $estabelecimentos = $this->estabelecimentoModel->findAll($limit, $offset);
-        $total = $this->estabelecimentoModel->count();
+        $estabelecimentos = $this->estabelecimentoModel->findPaginated($limit, $offset);
+        $total = $this->estabelecimentoModel->countTotal();
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $estabelecimentos,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => $total,
-                'pages' => ceil($total / $limit)
-            ]
+            'estabelecimentos' => $estabelecimentos,
+            'total' => $total,
+            'totalPages' => ceil($total / $limit),
+            'currentPage' => $page
         ]);
     }
     
@@ -203,8 +247,38 @@ class EstabelecimentoController extends BaseController
             $errors[] = 'CNES é obrigatório e deve ter 7 dígitos';
         }
         
-        if (empty($data['nome'])) {
-            $errors[] = 'Nome é obrigatório';
+        if (empty($data['cnpj'])) {
+            $errors[] = 'CNPJ é obrigatório';
+        } elseif (!ValidacaoService::validarCnpj($data['cnpj'])) {
+            $errors[] = 'CNPJ inválido';
+        }
+        
+        if (empty($data['razao_social'])) {
+            $errors[] = 'Razão Social é obrigatória';
+        }
+        
+        if (empty($data['logradouro'])) {
+            $errors[] = 'Logradouro é obrigatório';
+        }
+        
+        if (empty($data['numero'])) {
+            $errors[] = 'Número é obrigatório';
+        }
+        
+        if (empty($data['bairro'])) {
+            $errors[] = 'Bairro é obrigatório';
+        }
+        
+        if (empty($data['cep']) || !ValidacaoService::validarCep($data['cep'])) {
+            $errors[] = 'CEP inválido';
+        }
+        
+        if (empty($data['municipio'])) {
+            $errors[] = 'Município é obrigatório';
+        }
+        
+        if (!empty($data['email']) && !ValidacaoService::validarEmail($data['email'])) {
+            $errors[] = 'E-mail inválido';
         }
         
         return $errors;

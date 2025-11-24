@@ -62,6 +62,11 @@ $router->get('/api/validar-email', function() {
     $controller->validarEmail();
 });
 
+$router->get('/api/validar-cnpj', function() {
+    $controller = new ApiController();
+    $controller->validarCnpj();
+});
+
 $router->get('/faixas', function() {
     $controller = new FaixaController();
     $controller->index();

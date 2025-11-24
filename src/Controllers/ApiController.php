@@ -92,4 +92,28 @@ class ApiController extends BaseController
             'message' => $valido ? 'E-mail válido' : 'E-mail inválido'
         ]);
     }
+    
+    public function validarCnpj()
+    {
+        AuthMiddleware::handle();
+        
+        $cnpj = $_GET['cnpj'] ?? '';
+        
+        $cnpj = ValidacaoService::limparCnpj($cnpj);
+        
+        if (strlen($cnpj) !== 14) {
+            $this->jsonResponse([
+                'valido' => false,
+                'message' => 'CNPJ deve ter 14 dígitos'
+            ]);
+            return;
+        }
+        
+        $valido = ValidacaoService::validarCnpj($cnpj);
+        
+        $this->jsonResponse([
+            'valido' => $valido,
+            'message' => $valido ? 'CNPJ válido' : 'CNPJ inválido'
+        ]);
+    }
 }
