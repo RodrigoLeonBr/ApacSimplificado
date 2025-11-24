@@ -21,14 +21,72 @@ ob_start();
 </div>
 
 <!-- Busca em Tempo Real -->
-<div class="bg-white rounded-lg shadow-md p-6 mb-6" x-data="{ 
-    searchTerm: '', 
-    loading: false,
-    pacientes: <?= json_encode($pacientes ?? []) ?>,
-    totalPacientes: <?= $totalPacientes ?? 0 ?>,
-    currentPage: <?= $currentPage ?? 1 ?>,
-    totalPages: <?= $totalPages ?? 1 ?>
-}">
+<div class="bg-white rounded-lg shadow-md p-6 mb-6" 
+     x-data="{
+         searchTerm: '', 
+         loading: false,
+         pacientes: [],
+         totalPacientes: 0,
+         currentPage: 1,
+         totalPages: 1,
+         init() {
+             this.pacientes = <?= json_encode($pacientes ?? []) ?>;
+             this.totalPacientes = <?= $totalPacientes ?? 0 ?>;
+             this.currentPage = <?= $currentPage ?? 1 ?>;
+             this.totalPages = <?= $totalPages ?? 1 ?>;
+         },
+         formatarData(data) {
+             if (!data) return '-';
+             const partes = data.split('-');
+             if (partes.length === 3) {
+                 return partes[2] + '/' + partes[1] + '/' + partes[0];
+             }
+             return data;
+         },
+         buscarPacientes() {
+             this.loading = true;
+             fetch('/pacientes/ajax/search?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage)
+                 .then(response => response.json())
+                 .then(data => {
+                     this.pacientes = data.pacientes || [];
+                     this.totalPacientes = data.total || 0;
+                     this.totalPages = data.totalPages || 1;
+                     this.currentPage = data.currentPage || 1;
+                     this.loading = false;
+                 })
+                 .catch(error => {
+                     console.error('Erro ao buscar pacientes:', error);
+                     this.loading = false;
+                 });
+         },
+         carregarPagina(page) {
+             if (page < 1 || page > this.totalPages) return;
+             this.currentPage = page;
+             this.buscarPacientes();
+         },
+         confirmarExclusao(id) {
+             if (confirm('Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.')) {
+                 fetch('/pacientes/' + id + '/delete', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     }
+                 })
+                 .then(response => response.json())
+                 .then(data => {
+                     if (data.success) {
+                         window.location.reload();
+                     } else {
+                         alert('Erro ao excluir paciente: ' + data.message);
+                     }
+                 })
+                 .catch(error => {
+                     alert('Erro ao excluir paciente');
+                     console.error(error);
+                 });
+             }
+         }
+     }">
     <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Paciente</label>
         <div class="relative">
@@ -81,7 +139,7 @@ ob_start();
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="paciente.cns"></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="paciente.cpf || '-'"></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="paciente.nome"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatarData(paciente.data_nascimento)"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="$data.formatarData(paciente.data_nascimento)"></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="paciente.municipio"></td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <a :href="'/pacientes/' + paciente.id" class="text-blue-600 hover:text-blue-900 mr-3" title="Visualizar">
@@ -168,66 +226,6 @@ ob_start();
     </div>
 </div>
 
-<script>
-function formatarData(data) {
-    if (!data) return '-';
-    const partes = data.split('-');
-    if (partes.length === 3) {
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-    return data;
-}
-
-function buscarPacientes() {
-    const searchTerm = this.searchTerm;
-    const page = this.currentPage;
-    
-    this.loading = true;
-    
-    fetch(`/pacientes/ajax/search?q=${encodeURIComponent(searchTerm)}&page=${page}`)
-        .then(response => response.json())
-        .then(data => {
-            this.pacientes = data.pacientes || [];
-            this.totalPacientes = data.total || 0;
-            this.totalPages = data.totalPages || 1;
-            this.currentPage = data.currentPage || 1;
-            this.loading = false;
-        })
-        .catch(error => {
-            console.error('Erro ao buscar pacientes:', error);
-            this.loading = false;
-        });
-}
-
-function carregarPagina(page) {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
-    buscarPacientes.call(this);
-}
-
-function confirmarExclusao(id) {
-    if (confirm('Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.')) {
-        fetch(`/pacientes/${id}/delete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert('Erro ao excluir paciente: ' + data.message);
-            }
-        })
-        .catch(error => {
-            alert('Erro ao excluir paciente');
-            console.error(error);
-        });
-    }
-}
-</script>
 
 <?php
 $content = ob_get_clean();
