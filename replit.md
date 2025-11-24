@@ -5,7 +5,7 @@ Sistema web desenvolvido em PHP puro (sem frameworks) para gerenciamento e emiss
 
 ## Stack Tecnológico
 - **Backend**: PHP 8.3 (puro, sem frameworks)
-- **Banco de Dados**: PostgreSQL com PDO
+- **Banco de Dados**: MySQL 5.7 (hospedagem remota) com PDO
 - **Frontend**: HTML5 + Tailwind CSS (via CDN) + Alpine.js (via CDN)
 - **Arquitetura**: MVC simplificado com separação em camadas
 - **Servidor**: PHP Built-in Server (porta 5000)
@@ -97,18 +97,42 @@ sistema-apac/
 
 ## Banco de Dados
 
-### Tabelas Implementadas
+### Servidor MySQL Remoto
+- **Host**: 192.185.213.221 (hospedagem compartilhada)
+- **Database**: radlc849_apac
+- **Versão**: MySQL 5.7.23-23
+- **Charset**: utf8mb4
+- **Credenciais**: Armazenadas como secrets seguros (MYSQL_HOST, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD)
 
+### Tabelas Implementadas (12 tabelas)
+
+**Módulo Core (MVP):**
 1. **usuarios**: Usuários do sistema
 2. **faixas**: Faixas de números de APAC (13 dígitos)
 3. **apacs**: APACs emitidas (14 dígitos com DV)
 4. **logs**: Auditoria de ações do sistema
-5. **prestadores**: Para expansão futura
+
+**Módulo Pacientes e Laudos:**
+5. **pacientes**: Dados dos pacientes (CPF, CNS, nome, etc.)
+6. **laudos**: Laudos médicos vinculados às APACs
+7. **apacs_laudos**: Relacionamento N:N entre APACs e Laudos
+
+**Módulo Cadastros Auxiliares:**
+8. **procedimentos**: Procedimentos SUS (tabela SIA/SIH)
+9. **cids**: Classificação Internacional de Doenças
+10. **estabelecimentos**: Estabelecimentos de saúde (CNES)
+11. **profissionais**: Profissionais de saúde (CBO, CNS)
+12. **caracteres_atendimento**: Tipos de caractere de atendimento
 
 ### Relacionamentos
 - `apacs.faixa_id` → `faixas.id` (ON DELETE RESTRICT)
-- `apacs.emitido_por_usuario_id` → `usuarios.id` (ON DELETE SET NULL)
+- `apacs.usuario_id` → `usuarios.id` (ON DELETE SET NULL)
 - `logs.usuario_id` → `usuarios.id` (ON DELETE SET NULL)
+- `laudos.paciente_id` → `pacientes.id` (ON DELETE CASCADE)
+- `laudos.procedimento_principal_id` → `procedimentos.id`
+- `laudos.cid_principal_id` → `cids.id`
+- `apacs_laudos.apac_id` → `apacs.id` (ON DELETE CASCADE)
+- `apacs_laudos.laudo_id` → `laudos.id` (ON DELETE CASCADE)
 
 ### Índices Otimizados
 - Índices em campos de busca frequente
@@ -193,16 +217,35 @@ sistema-apac/
 
 ## Observações Técnicas
 
-### Adaptações Realizadas
-- **PostgreSQL vs MySQL**: O projeto foi adaptado para usar PostgreSQL (disponível no Replit) mantendo compatibilidade com a lógica original
-- **Triggers**: Implementados para atualização automática de timestamps
-- **Serial IDs**: Uso de SERIAL do PostgreSQL ao invés de AUTO_INCREMENT do MySQL
+### Migração PostgreSQL → MySQL (Fase 5)
+**Data**: 24/11/2025
 
-### Diferenças do Prompt Original
-1. Banco de dados PostgreSQL ao invés de MySQL (infraestrutura do Replit)
-2. Todas as funcionalidades P1 implementadas
-3. Interface moderna e responsiva com Tailwind CSS
-4. Alpine.js pronto para interatividade (uso mínimo no MVP)
+O sistema foi originalmente desenvolvido em PostgreSQL (Replit) e posteriormente migrado para MySQL remoto para suportar o conjunto completo de funcionalidades.
+
+**Adaptações de Nomenclatura:**
+
+| Tabela | Campo PostgreSQL | Campo MySQL |
+|--------|------------------|-------------|
+| usuarios | `password` | `senha_hash` |
+| faixas | `inicial_13dig` | `numero_inicial` |
+| faixas | `final_13dig` | `numero_final` |
+| faixas | - | `total` (novo) |
+| faixas | - | `utilizados` (novo) |
+| apacs | `numero_14dig` | `numero_apac` |
+| apacs | `emitido_por_usuario_id` | `usuario_id` |
+| apacs | `data_emissao` | `criada_em` |
+| logs | `tabela_afetada` | `tabela` |
+| logs | `created_at` | `criada_em` |
+
+**Campos Booleanos:**
+- PostgreSQL: Usa tipo `boolean` com valores string `'true'/'false'`
+- MySQL: Usa tipo `tinyint(1)` com valores inteiros `1/0`
+
+**Arquivos Adaptados:**
+- Models: Usuario.php, Faixa.php, Apac.php, Log.php
+- Services: AuthService.php, EmissaoService.php
+- Views: Todas as views de faixa, apac e dashboard
+- Config: database.php (driver pgsql → mysql)
 
 ## Desenvolvimento e Manutenção
 
@@ -226,6 +269,24 @@ sistema-apac/
 - **Permissões**: Acesso total ao sistema
 
 ## Versão
-- **Atual**: 1.0.0 (MVP)
-- **Data**: Novembro 2025
-- **Status**: Funcional e pronto para testes
+- **Atual**: 2.0.0 (MVP migrado para MySQL)
+- **Data**: 24/11/2025
+- **Status**: Migrado para MySQL remoto e pronto para expansão
+
+## Changelog
+
+### v2.0.0 - 24/11/2025
+- ✅ Migração completa de PostgreSQL para MySQL remoto
+- ✅ Adaptação de todos os Models para nomenclatura MySQL
+- ✅ Adaptação de todos os Services e Views
+- ✅ Criação de 12 tabelas no banco MySQL (vs 5 do PostgreSQL)
+- ✅ Dados iniciais: usuário admin, CIDs, procedimentos, estabelecimentos, profissionais
+- ✅ Testes de conectividade e funcionalidades básicas bem-sucedidos
+
+### v1.0.0 - 17/11/2025
+- ✅ MVP funcional em PostgreSQL
+- ✅ Sistema de autenticação completo
+- ✅ CRUD de faixas de APAC
+- ✅ Emissão individual de APACs com DV
+- ✅ Dashboard com estatísticas
+- ✅ Sistema de logs e auditoria
