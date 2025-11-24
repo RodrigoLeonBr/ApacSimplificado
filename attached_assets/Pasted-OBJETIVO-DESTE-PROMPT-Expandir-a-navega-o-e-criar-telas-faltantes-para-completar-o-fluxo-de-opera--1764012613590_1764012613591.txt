@@ -1,0 +1,72 @@
+OBJETIVO DESTE PROMPT
+
+Expandir a navegação e criar telas faltantes para completar o fluxo de operações do usuário e implementando todas as tabelas e dependências criadas.
+
+---
+
+📁 ESTRUTURA DE MENUS PROPOSTA
+
+NÍVEL 1: Menu Principal (Sidebar)
+`
+├── Dashboard
+├── Laudos e APACs
+│   ├── Novo Laudo
+│   ├── Listar Laudos
+│   ├── Listar APACs
+│   └── Emitir APAC (botão destacado em verde)
+├── Cadastros
+│   ├── Pacientes
+│   ├── Faixas de APAC
+│   ├── Estabelecimentos
+│   ├── Profissionais
+│   ├── CIDs
+│   └── Procedimentos
+├── Gerencial
+│   ├── Relatórios
+│   ├── Logs de Atividade
+│   └── Usuários
+├── Configurações
+│   ├── Meu Perfil
+│   ├── Alterar Senha
+│   └── Preferências
+└── Sair (localizado no header)
+`
+
+---
+
+🖥️ TELAS A SEREM CRIADAS
+
+TELA 1: Novo Laudo (Formulário Multi-Aba)
+Rota: /laudo/novo
+Abas:
+1. Paciente (CNS, CPF, Nome, Sexo, Data Nascimento, Mãe, Endereço, CEP, Município)
+2. Laudo (Prontuário, Nº Laudo, Data Laudo, CID, Procedimento Solicitado)
+3. Autorização (Estabelecimento Solicitante, Executante, Profissional, Caráter Atendimento)
+4. Resumo e Confirmação (Preview da APAC gerada)
+Componentes: Formulário com campos obrigatórios em amarelo, modais de busca (F2), integração ViaCEP
+
+TELA 2: Listar Laudos
+Rota: /laudos
+Funcionalidades: Tabela com filtros (data, paciente, status), ações (editar, visualizar, emitir APAC, deletar)
+
+TELA 3: Listar Faixas de APAC
+Rota: /faixas
+Funcionalidades: Tabela com faixas, status, quantidade disponível, ações (editar, visualizar, deletar, nova faixa)
+
+TELA 4: Novo Paciente
+Rota: /pacientes/novo
+Funcionalidades: Formulário com CNS, CPF, dados pessoais, endereço com integração ViaCEP
+
+TELA 5: Listar Pacientes
+Rota: /pacientes
+Funcionalidades: Tabela com busca, filtros, ações (editar, visualizar, deletar)
+
+TELA 6: Relatórios
+Rota: /relatorios
+Funcionalidades: Dashboard de relatórios com filtros por período, prestador, procedimento. Botões de exportação (PDF, Excel)
+
+TELA 7: Logs de Atividade
+Rota: /logs
+Funcionalidades: Tabela com todas as ações do sistema, filtros por usuário, tipo, data
+
+---
