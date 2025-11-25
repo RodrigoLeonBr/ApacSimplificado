@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = ($estabelecimento ? 'Editar' : 'Novo') . ' Estabelecimento - Sistema APAC';
 $isEdit = $estabelecimento !== null;
 ob_start();
@@ -10,7 +12,7 @@ ob_start();
             <h1 class="text-3xl font-bold text-gray-800"><?= $title ?? 'Estabelecimento' ?></h1>
             <p class="text-gray-600"><?= $isEdit ? 'Atualize os dados do estabelecimento' : 'Cadastre um novo estabelecimento de saúde' ?></p>
         </div>
-        <a href="/estabelecimentos" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
+        <a href="<?= UrlHelper::url('/estabelecimentos') ?>" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
             Voltar
         </a>
     </div>
@@ -29,7 +31,7 @@ ob_start();
             return;
         }
         this.validandoCnpj = true;
-        fetch('/api/validar-cnpj?cnpj=' + encodeURIComponent(this.cnpj))
+        fetch('<?= UrlHelper::url('/api/validar-cnpj') ?>?cnpj=' + encodeURIComponent(this.cnpj))
             .then(response => response.json())
             .then(data => {
                 this.cnpjValido = data.valido;
@@ -44,18 +46,23 @@ ob_start();
         if (cepLimpo.length !== 8) return;
         
         this.buscandoCep = true;
-        fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+        fetch(`/api/buscar-cep?cep=${cepLimpo}`)
             .then(response => response.json())
             .then(data => {
-                if (!data.erro) {
+                if (data.success) {
                     document.querySelector('[name=logradouro]').value = data.logradouro || '';
                     document.querySelector('[name=bairro]').value = data.bairro || '';
-                    document.querySelector('[name=municipio]').value = data.localidade || '';
-                    document.querySelector('[name=uf]').value = data.uf || '';
+                    document.querySelector('[name=municipio]').value = data.municipio || '';
+                    if (document.querySelector('[name=uf]')) {
+                        document.querySelector('[name=uf]').value = data.uf || '';
+                    }
+                } else {
+                    console.error('Erro ao buscar CEP:', data.message || 'CEP não encontrado');
                 }
                 this.buscandoCep = false;
             })
-            .catch(() => {
+            .catch(error => {
+                console.error('Erro ao buscar CEP:', error);
                 this.buscandoCep = false;
             });
     }
@@ -310,7 +317,7 @@ ob_start();
 
     <!-- Botões -->
     <div class="flex items-center justify-end gap-4 pt-4 border-t">
-        <a href="/estabelecimentos" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+        <a href="<?= UrlHelper::url('/estabelecimentos') ?>" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
             Cancelar
         </a>
         <button 
@@ -321,7 +328,20 @@ ob_start();
     </div>
 </form>
 
+<script>
+// Garantir que o formulário seja submetido mesmo se Alpine.js falhar
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action="<?= $action ?>"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Não prevenir o comportamento padrão - deixar o formulário ser submetido normalmente
+            console.log('Formulário sendo submetido...');
+        });
+    }
+});
+</script>
+
 <?php
 $content = ob_get_clean();
-require __DIR__ . '/../layout.php';
+require VIEWS_PATH . '/layouts/app.php';
 ?>

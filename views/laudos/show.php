@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Visualizar Laudo - Sistema APAC';
 ob_start();
 ?>
@@ -10,13 +12,13 @@ ob_start();
             <p class="text-gray-600">Detalhes completos do laudo</p>
         </div>
         <div class="space-x-2">
-            <a href="/laudos/<?= $laudo['id'] ?>/edit" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">
+            <a href="<?= UrlHelper::url('/laudos/' . $laudo['id'] . '/edit') ?>" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
                 Editar
             </a>
-            <a href="/laudos" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
+            <a href="<?= UrlHelper::url('/laudos') ?>" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
                 Voltar
             </a>
         </div>
@@ -148,7 +150,7 @@ ob_start();
             <h2 class="text-lg font-bold text-gray-800 mb-4">Ações</h2>
             <div class="space-y-2">
                 <?php if ($status !== 'autorizado'): ?>
-                <a href="/apacs/create?laudo_id=<?= $laudo['id'] ?>" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-bold py-2 px-4 rounded-lg transition">
+                <a href="<?= UrlHelper::url('/apacs/create?laudo_id=' . $laudo['id']) ?>" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-bold py-2 px-4 rounded-lg transition">
                     Emitir APAC
                 </a>
                 <?php endif; ?>
@@ -166,7 +168,7 @@ ob_start();
 <script>
 function confirmarExclusao(id) {
     if (confirm('Tem certeza que deseja excluir este laudo?')) {
-        fetch(`/laudos/${id}/delete`, {
+        fetch(`<?= UrlHelper::url('/laudos/') ?>${id}/delete`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -175,7 +177,7 @@ function confirmarExclusao(id) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.href = '/laudos';
+                window.location.href = '<?= UrlHelper::url('/laudos') ?>';
             } else {
                 alert('Erro ao excluir laudo: ' + data.message);
             }

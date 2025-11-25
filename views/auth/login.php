@@ -1,5 +1,7 @@
 <?php
 use App\Utils\Session;
+use App\Utils\UrlHelper;
+
 $title = 'Login - Sistema APAC';
 $old = Session::getFlash('old', []);
 ob_start();
@@ -14,7 +16,7 @@ ob_start();
         
         <?php require VIEWS_PATH . '/components/alerts.php'; ?>
         
-        <form method="POST" action="/login">
+        <form method="POST" action="<?= UrlHelper::url('/login') ?>">
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
                     E-mail

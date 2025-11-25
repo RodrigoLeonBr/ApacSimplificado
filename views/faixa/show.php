@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Detalhes da Faixa - Sistema APAC';
 ob_start();
 ?>
@@ -72,11 +74,11 @@ ob_start();
         </div>
         
         <div class="mt-6 flex space-x-3">
-            <a href="/faixas" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-center py-2 px-4 rounded">
+            <a href="<?= UrlHelper::url('/faixas') ?>" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-center py-2 px-4 rounded">
                 Voltar
             </a>
             <?php if ($faixa['status'] != 'esgotada'): ?>
-                <a href="/apacs/create" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-center py-2 px-4 rounded">
+                <a href="<?= UrlHelper::url('/apacs/create') ?>" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-center py-2 px-4 rounded">
                     Emitir APAC
                 </a>
             <?php endif; ?>

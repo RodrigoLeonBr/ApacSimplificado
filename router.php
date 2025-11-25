@@ -16,9 +16,8 @@ use App\Controllers\ApiController;
 
 $router = new Router();
 
-$router->get('/', function() {
-    header('Location: /dashboard');
-    exit;
+$router->get('/', function() use ($router) {
+    Router::redirect('/dashboard');
 });
 
 $router->get('/login', function() {
@@ -65,6 +64,11 @@ $router->get('/api/validar-email', function() {
 $router->get('/api/validar-cnpj', function() {
     $controller = new ApiController();
     $controller->validarCnpj();
+});
+
+$router->get('/api/buscar-cep', function() {
+    $controller = new ApiController();
+    $controller->buscarCep();
 });
 
 $router->get('/faixas', function() {
@@ -154,96 +158,6 @@ $router->post('/pacientes/{id}/update', function($id) {
 
 $router->post('/pacientes/{id}/delete', function($id) {
     $controller = new PacienteController();
-    $controller->delete($id);
-});
-
-$router->get('/cids/ajax/search', function() {
-    $controller = new CidController();
-    $controller->ajax_search();
-});
-
-$router->get('/cids/ajax/list', function() {
-    $controller = new CidController();
-    $controller->ajax_list();
-});
-
-$router->get('/cids', function() {
-    $controller = new CidController();
-    $controller->index();
-});
-
-$router->get('/cids/create', function() {
-    $controller = new CidController();
-    $controller->create();
-});
-
-$router->post('/cids', function() {
-    $controller = new CidController();
-    $controller->store();
-});
-
-$router->get('/cids/{id}', function($id) {
-    $controller = new CidController();
-    $controller->show($id);
-});
-
-$router->get('/cids/{id}/edit', function($id) {
-    $controller = new CidController();
-    $controller->edit($id);
-});
-
-$router->post('/cids/{id}/update', function($id) {
-    $controller = new CidController();
-    $controller->update($id);
-});
-
-$router->post('/cids/{id}/delete', function($id) {
-    $controller = new CidController();
-    $controller->delete($id);
-});
-
-$router->get('/procedimentos/ajax/search', function() {
-    $controller = new ProcedimentoController();
-    $controller->ajax_search();
-});
-
-$router->get('/procedimentos/ajax/list', function() {
-    $controller = new ProcedimentoController();
-    $controller->ajax_list();
-});
-
-$router->get('/procedimentos', function() {
-    $controller = new ProcedimentoController();
-    $controller->index();
-});
-
-$router->get('/procedimentos/create', function() {
-    $controller = new ProcedimentoController();
-    $controller->create();
-});
-
-$router->post('/procedimentos', function() {
-    $controller = new ProcedimentoController();
-    $controller->store();
-});
-
-$router->get('/procedimentos/{id}', function($id) {
-    $controller = new ProcedimentoController();
-    $controller->show($id);
-});
-
-$router->get('/procedimentos/{id}/edit', function($id) {
-    $controller = new ProcedimentoController();
-    $controller->edit($id);
-});
-
-$router->post('/procedimentos/{id}/update', function($id) {
-    $controller = new ProcedimentoController();
-    $controller->update($id);
-});
-
-$router->post('/procedimentos/{id}/delete', function($id) {
-    $controller = new ProcedimentoController();
     $controller->delete($id);
 });
 
@@ -337,51 +251,6 @@ $router->post('/profissionais/{id}/delete', function($id) {
     $controller->delete($id);
 });
 
-$router->get('/carater-atendimento/ajax/search', function() {
-    $controller = new CaraterAtendimentoController();
-    $controller->ajax_search();
-});
-
-$router->get('/carater-atendimento/ajax/list', function() {
-    $controller = new CaraterAtendimentoController();
-    $controller->ajax_list();
-});
-
-$router->get('/carater-atendimento', function() {
-    $controller = new CaraterAtendimentoController();
-    $controller->index();
-});
-
-$router->get('/carater-atendimento/create', function() {
-    $controller = new CaraterAtendimentoController();
-    $controller->create();
-});
-
-$router->post('/carater-atendimento', function() {
-    $controller = new CaraterAtendimentoController();
-    $controller->store();
-});
-
-$router->get('/carater-atendimento/{id}', function($id) {
-    $controller = new CaraterAtendimentoController();
-    $controller->show($id);
-});
-
-$router->get('/carater-atendimento/{id}/edit', function($id) {
-    $controller = new CaraterAtendimentoController();
-    $controller->edit($id);
-});
-
-$router->post('/carater-atendimento/{id}/update', function($id) {
-    $controller = new CaraterAtendimentoController();
-    $controller->update($id);
-});
-
-$router->post('/carater-atendimento/{id}/delete', function($id) {
-    $controller = new CaraterAtendimentoController();
-    $controller->delete($id);
-});
-
 $router->get('/laudos/ajax/search', function() {
     $controller = new LaudoController();
     $controller->ajax_search();
@@ -424,6 +293,170 @@ $router->post('/laudos/{id}/update', function($id) {
 
 $router->post('/laudos/{id}/delete', function($id) {
     $controller = new LaudoController();
+    $controller->delete($id);
+});
+
+// Rotas de Profissionais
+$router->get('/profissional/ajax/search', function() {
+    $controller = new ProfissionalController();
+    $controller->ajax_search();
+});
+
+$router->get('/profissional', function() {
+    $controller = new ProfissionalController();
+    $controller->index();
+});
+
+$router->get('/profissional/create', function() {
+    $controller = new ProfissionalController();
+    $controller->create();
+});
+
+$router->post('/profissional', function() {
+    $controller = new ProfissionalController();
+    $controller->store();
+});
+
+$router->get('/profissional/{id}', function($id) {
+    $controller = new ProfissionalController();
+    $controller->show($id);
+});
+
+$router->get('/profissional/{id}/edit', function($id) {
+    $controller = new ProfissionalController();
+    $controller->edit($id);
+});
+
+$router->post('/profissional/{id}/update', function($id) {
+    $controller = new ProfissionalController();
+    $controller->update($id);
+});
+
+$router->post('/profissional/{id}/delete', function($id) {
+    $controller = new ProfissionalController();
+    $controller->delete($id);
+});
+
+// Rotas de CIDs
+$router->get('/cid/ajax/search', function() {
+    $controller = new CidController();
+    $controller->ajax_search();
+});
+
+$router->get('/cid', function() {
+    $controller = new CidController();
+    $controller->index();
+});
+
+$router->get('/cid/create', function() {
+    $controller = new CidController();
+    $controller->create();
+});
+
+$router->post('/cid', function() {
+    $controller = new CidController();
+    $controller->store();
+});
+
+$router->get('/cid/{id}', function($id) {
+    $controller = new CidController();
+    $controller->show($id);
+});
+
+$router->get('/cid/{id}/edit', function($id) {
+    $controller = new CidController();
+    $controller->edit($id);
+});
+
+$router->post('/cid/{id}/update', function($id) {
+    $controller = new CidController();
+    $controller->update($id);
+});
+
+$router->post('/cid/{id}/delete', function($id) {
+    $controller = new CidController();
+    $controller->delete($id);
+});
+
+// Rotas de Procedimentos
+$router->get('/procedimento/ajax/search', function() {
+    $controller = new ProcedimentoController();
+    $controller->ajax_search();
+});
+
+$router->get('/procedimento', function() {
+    $controller = new ProcedimentoController();
+    $controller->index();
+});
+
+$router->get('/procedimento/create', function() {
+    $controller = new ProcedimentoController();
+    $controller->create();
+});
+
+$router->post('/procedimento', function() {
+    $controller = new ProcedimentoController();
+    $controller->store();
+});
+
+$router->get('/procedimento/{id}', function($id) {
+    $controller = new ProcedimentoController();
+    $controller->show($id);
+});
+
+$router->get('/procedimento/{id}/edit', function($id) {
+    $controller = new ProcedimentoController();
+    $controller->edit($id);
+});
+
+$router->post('/procedimento/{id}/update', function($id) {
+    $controller = new ProcedimentoController();
+    $controller->update($id);
+});
+
+$router->post('/procedimento/{id}/delete', function($id) {
+    $controller = new ProcedimentoController();
+    $controller->delete($id);
+});
+
+// Rotas de Caráter de Atendimento
+$router->get('/carater/ajax/search', function() {
+    $controller = new CaraterAtendimentoController();
+    $controller->ajax_search();
+});
+
+$router->get('/carater', function() {
+    $controller = new CaraterAtendimentoController();
+    $controller->index();
+});
+
+$router->get('/carater/create', function() {
+    $controller = new CaraterAtendimentoController();
+    $controller->create();
+});
+
+$router->post('/carater', function() {
+    $controller = new CaraterAtendimentoController();
+    $controller->store();
+});
+
+$router->get('/carater/{id}', function($id) {
+    $controller = new CaraterAtendimentoController();
+    $controller->show($id);
+});
+
+$router->get('/carater/{id}/edit', function($id) {
+    $controller = new CaraterAtendimentoController();
+    $controller->edit($id);
+});
+
+$router->post('/carater/{id}/update', function($id) {
+    $controller = new CaraterAtendimentoController();
+    $controller->update($id);
+});
+
+$router->post('/carater/{id}/delete', function($id) {
+    $controller = new CaraterAtendimentoController();
     $controller->delete($id);
 });
 

@@ -19,10 +19,20 @@ class CidController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $cids = $this->cidModel->findAll();
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $total = $this->cidModel->countTotal();
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
+        $offset = ($page - 1) * $limit;
         
-        $this->render('cids.index', [
+        $cids = $this->cidModel->findPaginated($limit, $offset);
+        
+        $this->render('cid/index', [
             'cids' => $cids,
+            'totalCids' => $total,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'flash' => $this->getFlash()
         ]);
     }
@@ -35,10 +45,10 @@ class CidController extends BaseController
         
         if (!$cid) {
             $this->flash('CID não encontrado', 'error');
-            $this->redirect('/cids');
+            $this->redirect('/cid');
         }
         
-        $this->render('cids.show', [
+        $this->render('cid/show', [
             'cid' => $cid,
             'flash' => $this->getFlash()
         ]);
@@ -48,7 +58,12 @@ class CidController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $this->render('cids.create', [
+        $this->render('cid/form', [
+            'cid' => null,
+            'action' => '/cid',
+            'method' => 'POST',
+            'title' => 'Novo CID',
+            'old' => [],
             'flash' => $this->getFlash()
         ]);
     }
@@ -58,26 +73,36 @@ class CidController extends BaseController
         AuthMiddleware::handle();
         
         $data = $this->getInput();
-        
         $errors = $this->validateCid($data);
+        
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/cids/create');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/cid/create');
         }
         
         if ($this->cidModel->findByCodigo($data['codigo'])) {
             $this->flash('Código CID já cadastrado no sistema', 'error');
-            $this->redirect('/cids/create');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/cid/create');
         }
         
-        $id = $this->cidModel->create($data);
-        
-        if ($id) {
-            $this->flash('CID cadastrado com sucesso', 'success');
-            $this->redirect('/cids/' . $id);
-        } else {
-            $this->flash('Erro ao cadastrar CID', 'error');
-            $this->redirect('/cids/create');
+        try {
+            $id = $this->cidModel->create($data);
+            
+            if ($id) {
+                $this->flash('CID cadastrado com sucesso', 'success');
+                $this->redirect('/cid/' . $id);
+            } else {
+                $this->flash('Erro ao cadastrar CID', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/cid/create');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar CID: ' . $e->getMessage());
+            $this->flash('Erro ao cadastrar CID: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/cid/create');
         }
     }
     
@@ -89,11 +114,15 @@ class CidController extends BaseController
         
         if (!$cid) {
             $this->flash('CID não encontrado', 'error');
-            $this->redirect('/cids');
+            $this->redirect('/cid');
         }
         
-        $this->render('cids.edit', [
+        $this->render('cid/form', [
             'cid' => $cid,
+            'action' => '/cid/' . $id . '/update',
+            'method' => 'POST',
+            'title' => 'Editar CID',
+            'old' => $cid,
             'flash' => $this->getFlash()
         ]);
     }
@@ -106,31 +135,41 @@ class CidController extends BaseController
         
         if (!$cid) {
             $this->flash('CID não encontrado', 'error');
-            $this->redirect('/cids');
+            $this->redirect('/cid');
         }
         
         $data = $this->getInput();
-        
         $errors = $this->validateCid($data);
+        
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/cids/' . $id . '/edit');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/cid/' . $id . '/edit');
         }
         
         $existing = $this->cidModel->findByCodigo($data['codigo']);
         if ($existing && $existing['id'] != $id) {
-            $this->flash('Código CID já cadastrado', 'error');
-            $this->redirect('/cids/' . $id . '/edit');
+            $this->flash('Código CID já cadastrado para outro CID', 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/cid/' . $id . '/edit');
         }
         
-        $updated = $this->cidModel->update($id, $data);
-        
-        if ($updated) {
-            $this->flash('CID atualizado com sucesso', 'success');
-            $this->redirect('/cids/' . $id);
-        } else {
-            $this->flash('Erro ao atualizar CID', 'error');
-            $this->redirect('/cids/' . $id . '/edit');
+        try {
+            $updated = $this->cidModel->update($id, $data);
+            
+            if ($updated) {
+                $this->flash('CID atualizado com sucesso', 'success');
+                $this->redirect('/cid/' . $id);
+            } else {
+                $this->flash('Erro ao atualizar CID', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/cid/' . $id . '/edit');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar CID: ' . $e->getMessage());
+            $this->flash('Erro ao atualizar CID: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/cid/' . $id . '/edit');
         }
     }
     
@@ -142,14 +181,19 @@ class CidController extends BaseController
         
         if (!$cid) {
             $this->jsonResponse(['success' => false, 'message' => 'CID não encontrado'], 404);
+            return;
         }
         
-        $deleted = $this->cidModel->delete($id);
-        
-        if ($deleted) {
-            $this->flash('CID excluído com sucesso', 'success');
-            $this->jsonResponse(['success' => true, 'message' => 'CID excluído com sucesso']);
-        } else {
+        try {
+            $deleted = $this->cidModel->delete($id);
+            
+            if ($deleted) {
+                $this->jsonResponse(['success' => true, 'message' => 'CID excluído com sucesso']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir CID'], 500);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao excluir CID: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir CID'], 500);
         }
     }
@@ -158,40 +202,28 @@ class CidController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $termo = $this->getInput('termo', '');
-        
-        if (strlen($termo) < 2) {
-            $this->jsonResponse(['success' => false, 'message' => 'Digite ao menos 2 caracteres']);
-        }
-        
-        $cids = $this->cidModel->search($termo);
-        
-        $this->jsonResponse([
-            'success' => true,
-            'data' => $cids
-        ]);
-    }
-    
-    public function ajax_list()
-    {
-        AuthMiddleware::handle();
-        
-        $page = (int) $this->getInput('page', 1);
-        $limit = (int) $this->getInput('limit', 10);
+        $q = $_GET['q'] ?? '';
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
         $offset = ($page - 1) * $limit;
         
-        $cids = $this->cidModel->findAll($limit, $offset);
-        $total = $this->cidModel->count();
+        if (strlen($q) === 0) {
+            $cids = $this->cidModel->findPaginated($limit, $offset);
+            $total = $this->cidModel->countTotal();
+        } else {
+            $cids = $this->cidModel->searchPaginated($q, $limit, $offset);
+            $total = $this->cidModel->searchCount($q);
+        }
+        
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $cids,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => $total,
-                'pages' => ceil($total / $limit)
-            ]
+            'cids' => $cids,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
     
@@ -200,11 +232,11 @@ class CidController extends BaseController
         $errors = [];
         
         if (empty($data['codigo'])) {
-            $errors[] = 'Código é obrigatório';
+            $errors['codigo'] = 'Código é obrigatório';
         }
         
         if (empty($data['descricao'])) {
-            $errors[] = 'Descrição é obrigatória';
+            $errors['descricao'] = 'Descrição é obrigatória';
         }
         
         return $errors;

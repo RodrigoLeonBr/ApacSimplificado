@@ -106,7 +106,10 @@ ob_start();
         </div>
     </div>
 
-    <form action="/laudos" method="POST" class="p-6">
+<?php
+use App\Utils\UrlHelper;
+?>
+    <form action="<?= UrlHelper::url('/laudos') ?>" method="POST" class="p-6">
         <!-- Aba 1: Paciente -->
         <div x-show="currentTab === 1" x-cloak>
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Dados do Paciente</h2>
@@ -321,7 +324,7 @@ ob_start();
                     <select name="estabelecimento_solicitante_id" x-model="formData.estabelecimento_solicitante_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-yellow-50">
                         <option value="">Selecione</option>
                         <?php foreach ($estabelecimentos as $estab): ?>
-                        <option value="<?= $estab['id'] ?>"><?= htmlspecialchars($estab['codigo']) ?> - <?= htmlspecialchars($estab['nome']) ?></option>
+                        <option value="<?= $estab['id'] ?>"><?= htmlspecialchars($estab['cnes'] ?? $estab['codigo'] ?? 'N/A') ?> - <?= htmlspecialchars($estab['razao_social'] ?? $estab['nome'] ?? 'N/A') ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -332,7 +335,7 @@ ob_start();
                     <select name="estabelecimento_executante_id" x-model="formData.estabelecimento_executante_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-yellow-50">
                         <option value="">Selecione</option>
                         <?php foreach ($estabelecimentos as $estab): ?>
-                        <option value="<?= $estab['id'] ?>"><?= htmlspecialchars($estab['codigo']) ?> - <?= htmlspecialchars($estab['nome']) ?></option>
+                        <option value="<?= $estab['id'] ?>"><?= htmlspecialchars($estab['cnes'] ?? $estab['codigo'] ?? 'N/A') ?> - <?= htmlspecialchars($estab['razao_social'] ?? $estab['nome'] ?? 'N/A') ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

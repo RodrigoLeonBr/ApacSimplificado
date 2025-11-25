@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $currentPath = $_SERVER['REQUEST_URI'] ?? '';
 $pathParts = array_filter(explode('/', parse_url($currentPath, PHP_URL_PATH)));
 
@@ -10,9 +12,13 @@ $routeNames = [
     'pacientes' => 'Pacientes',
     'faixas' => 'Faixas de APAC',
     'estabelecimentos' => 'Estabelecimentos',
+    'profissional' => 'Profissionais',
     'profissionais' => 'Profissionais',
+    'cid' => 'CIDs',
     'cids' => 'CIDs',
+    'procedimento' => 'Procedimentos',
     'procedimentos' => 'Procedimentos',
+    'carater' => 'Caráter de Atendimento',
     'carater-atendimento' => 'Caráter de Atendimento',
     'relatorios' => 'Relatórios',
     'logs' => 'Logs de Atividade',
@@ -36,15 +42,19 @@ $contextNames = [
     'pacientes' => 'Paciente',
     'faixas' => 'Faixa',
     'estabelecimentos' => 'Estabelecimento',
+    'profissional' => 'Profissional',
     'profissionais' => 'Profissional',
+    'cid' => 'CID',
     'cids' => 'CID',
+    'procedimento' => 'Procedimento',
     'procedimentos' => 'Procedimento',
+    'carater' => 'Caráter',
     'carater-atendimento' => 'Caráter',
     'usuarios' => 'Usuário',
 ];
 
 $breadcrumbs = [
-    ['name' => 'Início', 'url' => '/dashboard']
+    ['name' => 'Início', 'url' => UrlHelper::url('/dashboard')]
 ];
 
 $currentUrl = '';
@@ -70,7 +80,7 @@ foreach ($pathArray as $index => $part) {
     if ($index === count($pathArray) - 1) {
         $breadcrumbs[] = ['name' => $name, 'url' => null];
     } else {
-        $breadcrumbs[] = ['name' => $name, 'url' => $currentUrl];
+        $breadcrumbs[] = ['name' => $name, 'url' => UrlHelper::url($currentUrl)];
     }
     
     $previousPart = $part;

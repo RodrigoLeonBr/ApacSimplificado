@@ -72,6 +72,9 @@ class PacienteController extends BaseController
         
         $data = $this->getInput();
         
+        // Limpar e preparar dados
+        $data = $this->prepareData($data);
+        
         $errors = $this->validatePaciente($data);
         if (!empty($errors)) {
             $this->flash(implode(', ', $errors), 'error');
@@ -83,15 +86,64 @@ class PacienteController extends BaseController
             $this->redirect('/pacientes/create');
         }
         
-        $id = $this->pacienteModel->create($data);
-        
-        if ($id) {
-            $this->flash('Paciente cadastrado com sucesso', 'success');
-            $this->redirect('/pacientes/' . $id);
-        } else {
-            $this->flash('Erro ao cadastrar paciente', 'error');
+        try {
+            $id = $this->pacienteModel->create($data);
+            
+            if ($id) {
+                $this->flash('Paciente cadastrado com sucesso', 'success');
+                $this->redirect('/pacientes/' . $id);
+            } else {
+                $this->flash('Erro ao cadastrar paciente', 'error');
+                $this->redirect('/pacientes/create');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar paciente: ' . $e->getMessage());
+            $this->flash('Erro ao cadastrar paciente: ' . $e->getMessage(), 'error');
             $this->redirect('/pacientes/create');
         }
+    }
+    
+    private function prepareData($data)
+    {
+        // Limpar CPF (remover caracteres não numéricos)
+        if (!empty($data['cpf'])) {
+            $cpfLimpo = preg_replace('/[^0-9]/', '', $data['cpf']);
+            $data['cpf'] = !empty($cpfLimpo) ? $cpfLimpo : null;
+        } else {
+            $data['cpf'] = null;
+        }
+        
+        // Limpar CNS (remover caracteres não numéricos)
+        if (!empty($data['cns'])) {
+            $data['cns'] = preg_replace('/[^0-9]/', '', $data['cns']);
+        }
+        
+        // Limpar CEP (remover caracteres não numéricos)
+        if (!empty($data['cep'])) {
+            $data['cep'] = preg_replace('/[^0-9]/', '', $data['cep']);
+        }
+        
+        // Tratar complemento (pode ser vazio)
+        if (empty($data['complemento'])) {
+            $data['complemento'] = null;
+        }
+        
+        // Mapear raca_cor de número para texto (conforme ENUM da tabela)
+        $racaMap = [
+            '1' => 'Branca',
+            '2' => 'Preta',
+            '3' => 'Parda',
+            '4' => 'Amarela',
+            '5' => 'Indigena'
+        ];
+        if (!empty($data['raca_cor']) && isset($racaMap[$data['raca_cor']])) {
+            $data['raca_cor'] = $racaMap[$data['raca_cor']];
+        }
+        
+        // Remover campos que não existem na tabela
+        unset($data['uf']); // A tabela não tem coluna 'uf'
+        
+        return $data;
     }
     
     public function edit($id)
@@ -227,12 +279,17 @@ class PacienteController extends BaseController
             $errors[] = 'Nome é obrigatório';
         }
         
-        if (empty($data['cns']) || strlen($data['cns']) != 15) {
-            $errors[] = 'CNS é obrigatório e deve ter 15 dígitos';
+        if (empty($data['cns'])) {
+            $errors[] = 'CNS é obrigatório';
+        } elseif (strlen($data['cns']) != 15) {
+            $errors[] = 'CNS deve ter 15 dígitos';
         }
         
-        if (!empty($data['cpf']) && strlen($data['cpf']) != 11) {
-            $errors[] = 'CPF deve ter 11 dígitos';
+        if (!empty($data['cpf'])) {
+            $cpfLimpo = preg_replace('/[^0-9]/', '', $data['cpf']);
+            if (strlen($cpfLimpo) != 11) {
+                $errors[] = 'CPF deve ter 11 dígitos';
+            }
         }
         
         if (empty($data['data_nascimento'])) {
@@ -242,6 +299,36 @@ class PacienteController extends BaseController
         if (empty($data['sexo']) || !in_array($data['sexo'], ['M', 'F'])) {
             $errors[] = 'Sexo é obrigatório (M ou F)';
         }
+        
+        if (empty($data['nome_mae'])) {
+            $errors[] = 'Nome da mãe é obrigatório';
+        }
+        
+        if (empty($data['raca_cor'])) {
+            $errors[] = 'Raça/Cor é obrigatória';
+        }
+        
+        if (empty($data['cep'])) {
+            $errors[] = 'CEP é obrigatório';
+        }
+        
+        if (empty($data['logradouro'])) {
+            $errors[] = 'Logradouro é obrigatório';
+        }
+        
+        if (empty($data['numero'])) {
+            $errors[] = 'Número é obrigatório';
+        }
+        
+        if (empty($data['bairro'])) {
+            $errors[] = 'Bairro é obrigatório';
+        }
+        
+        if (empty($data['municipio'])) {
+            $errors[] = 'Município é obrigatório';
+        }
+        
+        // UF não existe na tabela, removido da validação
         
         return $errors;
     }

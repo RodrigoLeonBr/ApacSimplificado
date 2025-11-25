@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Profissional;
 use App\Middleware\AuthMiddleware;
+use App\Services\ValidacaoService;
 
 class ProfissionalController extends BaseController
 {
@@ -19,10 +20,20 @@ class ProfissionalController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $profissionais = $this->profissionalModel->findAll();
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $total = $this->profissionalModel->countTotal();
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
+        $offset = ($page - 1) * $limit;
         
-        $this->render('profissionais.index', [
+        $profissionais = $this->profissionalModel->findPaginated($limit, $offset);
+        
+        $this->render('profissional/index', [
             'profissionais' => $profissionais,
+            'totalProfissionais' => $total,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'flash' => $this->getFlash()
         ]);
     }
@@ -35,11 +46,18 @@ class ProfissionalController extends BaseController
         
         if (!$profissional) {
             $this->flash('Profissional não encontrado', 'error');
-            $this->redirect('/profissionais');
+            $this->redirect('/profissional');
         }
         
-        $this->render('profissionais.show', [
+        $laudos = $this->profissionalModel->getLaudos($id, 5);
+        $totalLaudosMes = $this->profissionalModel->countLaudosPorMes($id, date('m'), date('Y'));
+        $totalLaudosAno = $this->profissionalModel->countLaudosPorMes($id, null, date('Y'));
+        
+        $this->render('profissional/show', [
             'profissional' => $profissional,
+            'laudos' => $laudos,
+            'totalLaudosMes' => $totalLaudosMes,
+            'totalLaudosAno' => $totalLaudosAno,
             'flash' => $this->getFlash()
         ]);
     }
@@ -48,7 +66,12 @@ class ProfissionalController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $this->render('profissionais.create', [
+        $this->render('profissional/form', [
+            'profissional' => null,
+            'action' => '/profissional',
+            'method' => 'POST',
+            'title' => 'Novo Profissional',
+            'old' => [],
             'flash' => $this->getFlash()
         ]);
     }
@@ -58,26 +81,43 @@ class ProfissionalController extends BaseController
         AuthMiddleware::handle();
         
         $data = $this->getInput();
+        $data = $this->prepareData($data);
         
         $errors = $this->validateProfissional($data);
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/profissionais/create');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/profissional/create');
         }
         
-        if ($this->profissionalModel->findByCns($data['cns'])) {
+        if (!empty($data['cns']) && $this->profissionalModel->findByCns($data['cns'])) {
             $this->flash('CNS já cadastrado no sistema', 'error');
-            $this->redirect('/profissionais/create');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/profissional/create');
         }
         
-        $id = $this->profissionalModel->create($data);
+        if (!empty($data['cpf']) && $this->profissionalModel->findByCpf($data['cpf'])) {
+            $this->flash('CPF já cadastrado no sistema', 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/profissional/create');
+        }
         
-        if ($id) {
-            $this->flash('Profissional cadastrado com sucesso', 'success');
-            $this->redirect('/profissionais/' . $id);
-        } else {
-            $this->flash('Erro ao cadastrar profissional', 'error');
-            $this->redirect('/profissionais/create');
+        try {
+            $id = $this->profissionalModel->create($data);
+            
+            if ($id) {
+                $this->flash('Profissional cadastrado com sucesso', 'success');
+                $this->redirect('/profissional/' . $id);
+            } else {
+                $this->flash('Erro ao cadastrar profissional', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/profissional/create');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar profissional: ' . $e->getMessage());
+            $this->flash('Erro ao cadastrar profissional: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/profissional/create');
         }
     }
     
@@ -89,11 +129,15 @@ class ProfissionalController extends BaseController
         
         if (!$profissional) {
             $this->flash('Profissional não encontrado', 'error');
-            $this->redirect('/profissionais');
+            $this->redirect('/profissional');
         }
         
-        $this->render('profissionais.edit', [
+        $this->render('profissional/form', [
             'profissional' => $profissional,
+            'action' => '/profissional/' . $id . '/update',
+            'method' => 'POST',
+            'title' => 'Editar Profissional',
+            'old' => $profissional,
             'flash' => $this->getFlash()
         ]);
     }
@@ -106,31 +150,53 @@ class ProfissionalController extends BaseController
         
         if (!$profissional) {
             $this->flash('Profissional não encontrado', 'error');
-            $this->redirect('/profissionais');
+            $this->redirect('/profissional');
         }
         
         $data = $this->getInput();
+        $data = $this->prepareData($data);
         
         $errors = $this->validateProfissional($data);
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/profissionais/' . $id . '/edit');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/profissional/' . $id . '/edit');
         }
         
-        $existing = $this->profissionalModel->findByCns($data['cns']);
-        if ($existing && $existing['id'] != $id) {
-            $this->flash('CNS já cadastrado para outro profissional', 'error');
-            $this->redirect('/profissionais/' . $id . '/edit');
+        if (!empty($data['cns'])) {
+            $existing = $this->profissionalModel->findByCns($data['cns']);
+            if ($existing && $existing['id'] != $id) {
+                $this->flash('CNS já cadastrado para outro profissional', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/profissional/' . $id . '/edit');
+            }
         }
         
-        $updated = $this->profissionalModel->update($id, $data);
+        if (!empty($data['cpf'])) {
+            $existing = $this->profissionalModel->findByCpf($data['cpf']);
+            if ($existing && $existing['id'] != $id) {
+                $this->flash('CPF já cadastrado para outro profissional', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/profissional/' . $id . '/edit');
+            }
+        }
         
-        if ($updated) {
-            $this->flash('Profissional atualizado com sucesso', 'success');
-            $this->redirect('/profissionais/' . $id);
-        } else {
-            $this->flash('Erro ao atualizar profissional', 'error');
-            $this->redirect('/profissionais/' . $id . '/edit');
+        try {
+            $updated = $this->profissionalModel->update($id, $data);
+            
+            if ($updated) {
+                $this->flash('Profissional atualizado com sucesso', 'success');
+                $this->redirect('/profissional/' . $id);
+            } else {
+                $this->flash('Erro ao atualizar profissional', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/profissional/' . $id . '/edit');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar profissional: ' . $e->getMessage());
+            $this->flash('Erro ao atualizar profissional: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/profissional/' . $id . '/edit');
         }
     }
     
@@ -142,14 +208,19 @@ class ProfissionalController extends BaseController
         
         if (!$profissional) {
             $this->jsonResponse(['success' => false, 'message' => 'Profissional não encontrado'], 404);
+            return;
         }
         
-        $deleted = $this->profissionalModel->delete($id);
-        
-        if ($deleted) {
-            $this->flash('Profissional excluído com sucesso', 'success');
-            $this->jsonResponse(['success' => true, 'message' => 'Profissional excluído com sucesso']);
-        } else {
+        try {
+            $deleted = $this->profissionalModel->delete($id);
+            
+            if ($deleted) {
+                $this->jsonResponse(['success' => true, 'message' => 'Profissional excluído com sucesso']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir profissional'], 500);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao excluir profissional: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir profissional'], 500);
         }
     }
@@ -158,41 +229,68 @@ class ProfissionalController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $termo = $this->getInput('termo', '');
+        $q = $_GET['q'] ?? '';
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
         
-        if (strlen($termo) < 3) {
-            $this->jsonResponse(['success' => false, 'message' => 'Digite ao menos 3 caracteres']);
+        if (strlen($q) === 0) {
+            $profissionais = $this->profissionalModel->findPaginated($limit, $offset);
+            $total = $this->profissionalModel->countTotal();
+        } else {
+            $profissionais = $this->profissionalModel->searchPaginated($q, $limit, $offset);
+            $total = $this->profissionalModel->searchCount($q);
         }
         
-        $profissionais = $this->profissionalModel->search($termo);
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $profissionais
+            'profissionais' => $profissionais,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
     
-    public function ajax_list()
+    private function prepareData($data)
     {
-        AuthMiddleware::handle();
+        // Limpar CNS (remover caracteres não numéricos)
+        if (!empty($data['cns'])) {
+            $data['cns'] = preg_replace('/[^0-9]/', '', $data['cns']);
+        } else {
+            $data['cns'] = null;
+        }
         
-        $page = (int) $this->getInput('page', 1);
-        $limit = (int) $this->getInput('limit', 10);
-        $offset = ($page - 1) * $limit;
+        // Limpar CPF (remover caracteres não numéricos)
+        if (!empty($data['cpf'])) {
+            $data['cpf'] = preg_replace('/[^0-9]/', '', $data['cpf']);
+        } else {
+            $data['cpf'] = null;
+        }
         
-        $profissionais = $this->profissionalModel->findAll($limit, $offset);
-        $total = $this->profissionalModel->count();
+        // Limpar telefone (remover caracteres não numéricos)
+        if (!empty($data['telefone'])) {
+            $data['telefone'] = preg_replace('/[^0-9]/', '', $data['telefone']);
+        } else {
+            $data['telefone'] = null;
+        }
         
-        $this->jsonResponse([
-            'success' => true,
-            'data' => $profissionais,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => $total,
-                'pages' => ceil($total / $limit)
-            ]
-        ]);
+        // Tratar campos opcionais
+        $optionalFields = ['matricula', 'email', 'especialidade', 'uf', 'municipio'];
+        foreach ($optionalFields as $field) {
+            if (isset($data[$field]) && empty($data[$field])) {
+                $data[$field] = null;
+            }
+        }
+        
+        // Status padrão
+        if (empty($data['status'])) {
+            $data['status'] = 'ativo';
+        }
+        
+        return $data;
     }
     
     private function validateProfissional($data)
@@ -200,11 +298,29 @@ class ProfissionalController extends BaseController
         $errors = [];
         
         if (empty($data['nome'])) {
-            $errors[] = 'Nome é obrigatório';
+            $errors['nome'] = 'Nome é obrigatório';
         }
         
-        if (empty($data['cns']) || strlen($data['cns']) != 15) {
-            $errors[] = 'CNS é obrigatório e deve ter 15 dígitos';
+        if (!empty($data['cns'])) {
+            $cnsLimpo = preg_replace('/[^0-9]/', '', $data['cns']);
+            if (strlen($cnsLimpo) != 15) {
+                $errors['cns'] = 'CNS deve ter 15 dígitos';
+            } elseif (!ValidacaoService::validarCns($cnsLimpo)) {
+                $errors['cns'] = 'CNS inválido';
+            }
+        }
+        
+        if (!empty($data['cpf'])) {
+            $cpfLimpo = preg_replace('/[^0-9]/', '', $data['cpf']);
+            if (strlen($cpfLimpo) != 11) {
+                $errors['cpf'] = 'CPF deve ter 11 dígitos';
+            } elseif (!ValidacaoService::validarCpf($cpfLimpo)) {
+                $errors['cpf'] = 'CPF inválido';
+            }
+        }
+        
+        if (!empty($data['email']) && !ValidacaoService::validarEmail($data['email'])) {
+            $errors['email'] = 'E-mail inválido';
         }
         
         return $errors;

@@ -19,10 +19,20 @@ class CaraterAtendimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $caracteres = $this->caraterModel->findAll();
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $total = $this->caraterModel->countTotal();
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
+        $offset = ($page - 1) * $limit;
         
-        $this->render('carater_atendimento.index', [
-            'caracteres' => $caracteres,
+        $carateres = $this->caraterModel->findPaginated($limit, $offset);
+        
+        $this->render('carater/index', [
+            'carateres' => $carateres,
+            'totalCarateres' => $total,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'flash' => $this->getFlash()
         ]);
     }
@@ -34,11 +44,11 @@ class CaraterAtendimentoController extends BaseController
         $carater = $this->caraterModel->findById($id);
         
         if (!$carater) {
-            $this->flash('Caráter de atendimento não encontrado', 'error');
-            $this->redirect('/carater-atendimento');
+            $this->flash('Caráter de Atendimento não encontrado', 'error');
+            $this->redirect('/carater');
         }
         
-        $this->render('carater_atendimento.show', [
+        $this->render('carater/show', [
             'carater' => $carater,
             'flash' => $this->getFlash()
         ]);
@@ -48,7 +58,12 @@ class CaraterAtendimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $this->render('carater_atendimento.create', [
+        $this->render('carater/form', [
+            'carater' => null,
+            'action' => '/carater',
+            'method' => 'POST',
+            'title' => 'Novo Caráter de Atendimento',
+            'old' => [],
             'flash' => $this->getFlash()
         ]);
     }
@@ -58,26 +73,36 @@ class CaraterAtendimentoController extends BaseController
         AuthMiddleware::handle();
         
         $data = $this->getInput();
-        
         $errors = $this->validateCarater($data);
+        
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/carater-atendimento/create');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/carater/create');
         }
         
         if ($this->caraterModel->findByCodigo($data['codigo'])) {
             $this->flash('Código já cadastrado no sistema', 'error');
-            $this->redirect('/carater-atendimento/create');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/carater/create');
         }
         
-        $id = $this->caraterModel->create($data);
-        
-        if ($id) {
-            $this->flash('Caráter de atendimento cadastrado com sucesso', 'success');
-            $this->redirect('/carater-atendimento/' . $id);
-        } else {
-            $this->flash('Erro ao cadastrar caráter de atendimento', 'error');
-            $this->redirect('/carater-atendimento/create');
+        try {
+            $id = $this->caraterModel->create($data);
+            
+            if ($id) {
+                $this->flash('Caráter de Atendimento cadastrado com sucesso', 'success');
+                $this->redirect('/carater/' . $id);
+            } else {
+                $this->flash('Erro ao cadastrar caráter de atendimento', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/carater/create');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar caráter de atendimento: ' . $e->getMessage());
+            $this->flash('Erro ao cadastrar caráter de atendimento: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/carater/create');
         }
     }
     
@@ -88,12 +113,16 @@ class CaraterAtendimentoController extends BaseController
         $carater = $this->caraterModel->findById($id);
         
         if (!$carater) {
-            $this->flash('Caráter de atendimento não encontrado', 'error');
-            $this->redirect('/carater-atendimento');
+            $this->flash('Caráter de Atendimento não encontrado', 'error');
+            $this->redirect('/carater');
         }
         
-        $this->render('carater_atendimento.edit', [
+        $this->render('carater/form', [
             'carater' => $carater,
+            'action' => '/carater/' . $id . '/update',
+            'method' => 'POST',
+            'title' => 'Editar Caráter de Atendimento',
+            'old' => $carater,
             'flash' => $this->getFlash()
         ]);
     }
@@ -105,32 +134,42 @@ class CaraterAtendimentoController extends BaseController
         $carater = $this->caraterModel->findById($id);
         
         if (!$carater) {
-            $this->flash('Caráter de atendimento não encontrado', 'error');
-            $this->redirect('/carater-atendimento');
+            $this->flash('Caráter de Atendimento não encontrado', 'error');
+            $this->redirect('/carater');
         }
         
         $data = $this->getInput();
-        
         $errors = $this->validateCarater($data);
+        
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/carater-atendimento/' . $id . '/edit');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/carater/' . $id . '/edit');
         }
         
         $existing = $this->caraterModel->findByCodigo($data['codigo']);
         if ($existing && $existing['id'] != $id) {
-            $this->flash('Código já cadastrado', 'error');
-            $this->redirect('/carater-atendimento/' . $id . '/edit');
+            $this->flash('Código já cadastrado para outro caráter de atendimento', 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/carater/' . $id . '/edit');
         }
         
-        $updated = $this->caraterModel->update($id, $data);
-        
-        if ($updated) {
-            $this->flash('Caráter de atendimento atualizado com sucesso', 'success');
-            $this->redirect('/carater-atendimento/' . $id);
-        } else {
-            $this->flash('Erro ao atualizar caráter de atendimento', 'error');
-            $this->redirect('/carater-atendimento/' . $id . '/edit');
+        try {
+            $updated = $this->caraterModel->update($id, $data);
+            
+            if ($updated) {
+                $this->flash('Caráter de Atendimento atualizado com sucesso', 'success');
+                $this->redirect('/carater/' . $id);
+            } else {
+                $this->flash('Erro ao atualizar caráter de atendimento', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/carater/' . $id . '/edit');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar caráter de atendimento: ' . $e->getMessage());
+            $this->flash('Erro ao atualizar caráter de atendimento: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/carater/' . $id . '/edit');
         }
     }
     
@@ -141,15 +180,20 @@ class CaraterAtendimentoController extends BaseController
         $carater = $this->caraterModel->findById($id);
         
         if (!$carater) {
-            $this->jsonResponse(['success' => false, 'message' => 'Caráter de atendimento não encontrado'], 404);
+            $this->jsonResponse(['success' => false, 'message' => 'Caráter de Atendimento não encontrado'], 404);
+            return;
         }
         
-        $deleted = $this->caraterModel->delete($id);
-        
-        if ($deleted) {
-            $this->flash('Caráter de atendimento excluído com sucesso', 'success');
-            $this->jsonResponse(['success' => true, 'message' => 'Caráter de atendimento excluído com sucesso']);
-        } else {
+        try {
+            $deleted = $this->caraterModel->delete($id);
+            
+            if ($deleted) {
+                $this->jsonResponse(['success' => true, 'message' => 'Caráter de Atendimento excluído com sucesso']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir caráter de atendimento'], 500);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao excluir caráter de atendimento: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir caráter de atendimento'], 500);
         }
     }
@@ -158,40 +202,28 @@ class CaraterAtendimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $termo = $this->getInput('termo', '');
-        
-        if (strlen($termo) < 2) {
-            $this->jsonResponse(['success' => false, 'message' => 'Digite ao menos 2 caracteres']);
-        }
-        
-        $caracteres = $this->caraterModel->search($termo);
-        
-        $this->jsonResponse([
-            'success' => true,
-            'data' => $caracteres
-        ]);
-    }
-    
-    public function ajax_list()
-    {
-        AuthMiddleware::handle();
-        
-        $page = (int) $this->getInput('page', 1);
-        $limit = (int) $this->getInput('limit', 10);
+        $q = $_GET['q'] ?? '';
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
         $offset = ($page - 1) * $limit;
         
-        $caracteres = $this->caraterModel->findAll($limit, $offset);
-        $total = $this->caraterModel->count();
+        if (strlen($q) === 0) {
+            $carateres = $this->caraterModel->findPaginated($limit, $offset);
+            $total = $this->caraterModel->countTotal();
+        } else {
+            $carateres = $this->caraterModel->searchPaginated($q, $limit, $offset);
+            $total = $this->caraterModel->searchCount($q);
+        }
+        
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $caracteres,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => $total,
-                'pages' => ceil($total / $limit)
-            ]
+            'carateres' => $carateres,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
     
@@ -200,11 +232,11 @@ class CaraterAtendimentoController extends BaseController
         $errors = [];
         
         if (empty($data['codigo'])) {
-            $errors[] = 'Código é obrigatório';
+            $errors['codigo'] = 'Código é obrigatório';
         }
         
         if (empty($data['descricao'])) {
-            $errors[] = 'Descrição é obrigatória';
+            $errors['descricao'] = 'Descrição é obrigatória';
         }
         
         return $errors;

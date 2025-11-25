@@ -1,0 +1,18 @@
+# Redireciona para o diretório public se acessado diretamente
+RewriteEngine On
+
+# Se já está em /public/, não faz nada - deixa o .htaccess de public/ processar
+RewriteCond %{REQUEST_URI} ^/ApacSimplificado/public/
+RewriteRule ^ - [L]
+
+# Se é a raiz do projeto (/ApacSimplificado/ ou /ApacSimplificado), redireciona para public/
+RewriteCond %{REQUEST_URI} ^/ApacSimplificado/?$
+RewriteRule ^(.*)$ /ApacSimplificado/public/ [R=301,L]
+
+# Para outros caminhos que não são public/ e não são arquivos/diretórios físicos, 
+# executa index.php na raiz (que fará o redirect via PHP)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/ApacSimplificado/
+RewriteCond %{REQUEST_URI} !^/ApacSimplificado/public/
+RewriteRule ^(.*)$ index.php [L]

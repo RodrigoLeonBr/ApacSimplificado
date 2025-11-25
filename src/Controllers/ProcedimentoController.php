@@ -19,10 +19,20 @@ class ProcedimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $procedimentos = $this->procedimentoModel->findAll();
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
+        $total = $this->procedimentoModel->countTotal();
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
+        $offset = ($page - 1) * $limit;
         
-        $this->render('procedimentos.index', [
+        $procedimentos = $this->procedimentoModel->findPaginated($limit, $offset);
+        
+        $this->render('procedimento/index', [
             'procedimentos' => $procedimentos,
+            'totalProcedimentos' => $total,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
             'flash' => $this->getFlash()
         ]);
     }
@@ -35,10 +45,10 @@ class ProcedimentoController extends BaseController
         
         if (!$procedimento) {
             $this->flash('Procedimento não encontrado', 'error');
-            $this->redirect('/procedimentos');
+            $this->redirect('/procedimento');
         }
         
-        $this->render('procedimentos.show', [
+        $this->render('procedimento/show', [
             'procedimento' => $procedimento,
             'flash' => $this->getFlash()
         ]);
@@ -48,7 +58,12 @@ class ProcedimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $this->render('procedimentos.create', [
+        $this->render('procedimento/form', [
+            'procedimento' => null,
+            'action' => '/procedimento',
+            'method' => 'POST',
+            'title' => 'Novo Procedimento',
+            'old' => [],
             'flash' => $this->getFlash()
         ]);
     }
@@ -58,26 +73,36 @@ class ProcedimentoController extends BaseController
         AuthMiddleware::handle();
         
         $data = $this->getInput();
-        
         $errors = $this->validateProcedimento($data);
+        
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/procedimentos/create');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/procedimento/create');
         }
         
         if ($this->procedimentoModel->findByCodigo($data['codigo_procedimento'])) {
-            $this->flash('Código de procedimento já cadastrado', 'error');
-            $this->redirect('/procedimentos/create');
+            $this->flash('Código do procedimento já cadastrado no sistema', 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/procedimento/create');
         }
         
-        $id = $this->procedimentoModel->create($data);
-        
-        if ($id) {
-            $this->flash('Procedimento cadastrado com sucesso', 'success');
-            $this->redirect('/procedimentos/' . $id);
-        } else {
-            $this->flash('Erro ao cadastrar procedimento', 'error');
-            $this->redirect('/procedimentos/create');
+        try {
+            $id = $this->procedimentoModel->create($data);
+            
+            if ($id) {
+                $this->flash('Procedimento cadastrado com sucesso', 'success');
+                $this->redirect('/procedimento/' . $id);
+            } else {
+                $this->flash('Erro ao cadastrar procedimento', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/procedimento/create');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar procedimento: ' . $e->getMessage());
+            $this->flash('Erro ao cadastrar procedimento: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/procedimento/create');
         }
     }
     
@@ -89,11 +114,15 @@ class ProcedimentoController extends BaseController
         
         if (!$procedimento) {
             $this->flash('Procedimento não encontrado', 'error');
-            $this->redirect('/procedimentos');
+            $this->redirect('/procedimento');
         }
         
-        $this->render('procedimentos.edit', [
+        $this->render('procedimento/form', [
             'procedimento' => $procedimento,
+            'action' => '/procedimento/' . $id . '/update',
+            'method' => 'POST',
+            'title' => 'Editar Procedimento',
+            'old' => $procedimento,
             'flash' => $this->getFlash()
         ]);
     }
@@ -106,31 +135,41 @@ class ProcedimentoController extends BaseController
         
         if (!$procedimento) {
             $this->flash('Procedimento não encontrado', 'error');
-            $this->redirect('/procedimentos');
+            $this->redirect('/procedimento');
         }
         
         $data = $this->getInput();
-        
         $errors = $this->validateProcedimento($data);
+        
         if (!empty($errors)) {
-            $this->flash(implode(', ', $errors), 'error');
-            $this->redirect('/procedimentos/' . $id . '/edit');
+            \App\Utils\Session::flash('errors', $errors);
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/procedimento/' . $id . '/edit');
         }
         
         $existing = $this->procedimentoModel->findByCodigo($data['codigo_procedimento']);
         if ($existing && $existing['id'] != $id) {
-            $this->flash('Código de procedimento já cadastrado', 'error');
-            $this->redirect('/procedimentos/' . $id . '/edit');
+            $this->flash('Código do procedimento já cadastrado para outro procedimento', 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/procedimento/' . $id . '/edit');
         }
         
-        $updated = $this->procedimentoModel->update($id, $data);
-        
-        if ($updated) {
-            $this->flash('Procedimento atualizado com sucesso', 'success');
-            $this->redirect('/procedimentos/' . $id);
-        } else {
-            $this->flash('Erro ao atualizar procedimento', 'error');
-            $this->redirect('/procedimentos/' . $id . '/edit');
+        try {
+            $updated = $this->procedimentoModel->update($id, $data);
+            
+            if ($updated) {
+                $this->flash('Procedimento atualizado com sucesso', 'success');
+                $this->redirect('/procedimento/' . $id);
+            } else {
+                $this->flash('Erro ao atualizar procedimento', 'error');
+                \App\Utils\Session::flash('old', $data);
+                $this->redirect('/procedimento/' . $id . '/edit');
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao atualizar procedimento: ' . $e->getMessage());
+            $this->flash('Erro ao atualizar procedimento: ' . $e->getMessage(), 'error');
+            \App\Utils\Session::flash('old', $data);
+            $this->redirect('/procedimento/' . $id . '/edit');
         }
     }
     
@@ -142,14 +181,19 @@ class ProcedimentoController extends BaseController
         
         if (!$procedimento) {
             $this->jsonResponse(['success' => false, 'message' => 'Procedimento não encontrado'], 404);
+            return;
         }
         
-        $deleted = $this->procedimentoModel->delete($id);
-        
-        if ($deleted) {
-            $this->flash('Procedimento excluído com sucesso', 'success');
-            $this->jsonResponse(['success' => true, 'message' => 'Procedimento excluído com sucesso']);
-        } else {
+        try {
+            $deleted = $this->procedimentoModel->delete($id);
+            
+            if ($deleted) {
+                $this->jsonResponse(['success' => true, 'message' => 'Procedimento excluído com sucesso']);
+            } else {
+                $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir procedimento'], 500);
+            }
+        } catch (\Exception $e) {
+            error_log('Erro ao excluir procedimento: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Erro ao excluir procedimento'], 500);
         }
     }
@@ -158,40 +202,28 @@ class ProcedimentoController extends BaseController
     {
         AuthMiddleware::handle();
         
-        $termo = $this->getInput('termo', '');
-        
-        if (strlen($termo) < 2) {
-            $this->jsonResponse(['success' => false, 'message' => 'Digite ao menos 2 caracteres']);
-        }
-        
-        $procedimentos = $this->procedimentoModel->search($termo);
-        
-        $this->jsonResponse([
-            'success' => true,
-            'data' => $procedimentos
-        ]);
-    }
-    
-    public function ajax_list()
-    {
-        AuthMiddleware::handle();
-        
-        $page = (int) $this->getInput('page', 1);
-        $limit = (int) $this->getInput('limit', 10);
+        $q = $_GET['q'] ?? '';
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $limit = 10;
         $offset = ($page - 1) * $limit;
         
-        $procedimentos = $this->procedimentoModel->findAll($limit, $offset);
-        $total = $this->procedimentoModel->count();
+        if (strlen($q) === 0) {
+            $procedimentos = $this->procedimentoModel->findPaginated($limit, $offset);
+            $total = $this->procedimentoModel->countTotal();
+        } else {
+            $procedimentos = $this->procedimentoModel->searchPaginated($q, $limit, $offset);
+            $total = $this->procedimentoModel->searchCount($q);
+        }
+        
+        $totalPages = max(1, ceil($total / $limit));
+        $page = min($page, $totalPages);
         
         $this->jsonResponse([
             'success' => true,
-            'data' => $procedimentos,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => $total,
-                'pages' => ceil($total / $limit)
-            ]
+            'procedimentos' => $procedimentos,
+            'total' => $total,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
     
@@ -200,11 +232,11 @@ class ProcedimentoController extends BaseController
         $errors = [];
         
         if (empty($data['codigo_procedimento'])) {
-            $errors[] = 'Código do procedimento é obrigatório';
+            $errors['codigo_procedimento'] = 'Código do procedimento é obrigatório';
         }
         
-        if (empty($data['nome'])) {
-            $errors[] = 'Nome é obrigatório';
+        if (empty($data['descricao'])) {
+            $errors['descricao'] = 'Descrição é obrigatória';
         }
         
         return $errors;

@@ -41,7 +41,21 @@ abstract class BaseModel
     public function create(array $data)
     {
         try {
-            $fields = array_keys($data);
+            // Filtrar campos NULL vazios (exceto se explicitamente definidos como null)
+            $filteredData = [];
+            foreach ($data as $key => $value) {
+                // Incluir o campo mesmo se for null (para permitir NULL no banco)
+                // Mas remover campos que são strings vazias quando não são obrigatórios
+                if ($value !== '' || $value === null) {
+                    $filteredData[$key] = $value === '' ? null : $value;
+                }
+            }
+            
+            if (empty($filteredData)) {
+                throw new \Exception('Nenhum dado fornecido para inserção');
+            }
+            
+            $fields = array_keys($filteredData);
             $placeholders = array_map(function($field) {
                 return ":{$field}";
             }, $fields);
@@ -53,7 +67,7 @@ abstract class BaseModel
                 implode(', ', $placeholders)
             );
             
-            $this->db->execute($sql, $data);
+            $this->db->execute($sql, $filteredData);
             return $this->db->lastInsertId();
         } catch (PDOException $e) {
             $this->tratarErro($e, 'create');

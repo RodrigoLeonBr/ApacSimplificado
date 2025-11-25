@@ -9,7 +9,7 @@ use App\Utils\Session;
 use App\Utils\Validation;
 use App\Services\DigitoVerificadorService;
 
-class FaixaController
+class FaixaController extends BaseController
 {
     private $authService;
     private $faixaModel;
@@ -54,41 +54,44 @@ class FaixaController
     {
         $this->authService->guard();
         
-        $errors = Validation::errors($_POST, [
-            'inicial_13dig' => 'required|numeric',
-            'final_13dig' => 'required|numeric'
+        // Mapear campos do formulário para os nomes esperados
+        $data = [
+            'numero_inicial' => $_POST['numero_inicial'] ?? '',
+            'numero_final' => $_POST['numero_final'] ?? ''
+        ];
+        
+        $errors = Validation::errors($data, [
+            'numero_inicial' => 'required|numeric',
+            'numero_final' => 'required|numeric'
         ]);
         
         if (!empty($errors)) {
             Session::flash('errors', $errors);
             Session::flash('old', $_POST);
-            header('Location: /faixas/create');
-            exit;
+            $this->redirect('/faixas/create');
         }
         
-        $inicial = $_POST['inicial_13dig'];
-        $final = $_POST['final_13dig'];
+        $inicial = preg_replace('/[^0-9]/', '', $data['numero_inicial']);
+        $final = preg_replace('/[^0-9]/', '', $data['numero_final']);
         
         if (!Validation::validateAPAC13($inicial) || !Validation::validateAPAC13($final)) {
             Session::flash('error', 'Os números devem ter exatamente 13 dígitos.');
             Session::flash('old', $_POST);
-            header('Location: /faixas/create');
-            exit;
+            $this->redirect('/faixas/create');
         }
         
         if ((int)$inicial > (int)$final) {
             Session::flash('error', 'O número inicial não pode ser maior que o final.');
             Session::flash('old', $_POST);
-            header('Location: /faixas/create');
-            exit;
+            $this->redirect('/faixas/create');
         }
         
         $quantidade = (int)$final - (int)$inicial + 1;
         
         try {
             $faixaId = $this->faixaModel->create([
-                'inicial_13dig' => $inicial,
-                'final_13dig' => $final,
+                'numero_inicial' => $inicial,
+                'numero_final' => $final,
                 'quantidade' => $quantidade,
                 'status' => 'disponivel'
             ]);
@@ -103,13 +106,12 @@ class FaixaController
             ]);
             
             Session::flash('success', 'Faixa cadastrada com sucesso!');
-            header('Location: /faixas');
+            $this->redirect('/faixas');
         } catch (\Exception $e) {
             Session::flash('error', 'Erro ao cadastrar faixa: ' . $e->getMessage());
             Session::flash('old', $_POST);
-            header('Location: /faixas/create');
+            $this->redirect('/faixas/create');
         }
-        exit;
     }
     
     public function show($id)
@@ -120,8 +122,7 @@ class FaixaController
         
         if (!$faixa) {
             Session::flash('error', 'Faixa não encontrada.');
-            header('Location: /faixas');
-            exit;
+            $this->redirect('/faixas');
         }
         
         $faixa['apacs_emitidas'] = $this->faixaModel->countApacsEmitidas($faixa['id']);
@@ -138,16 +139,14 @@ class FaixaController
         
         if (!$faixa) {
             Session::flash('error', 'Faixa não encontrada.');
-            header('Location: /faixas');
-            exit;
+            $this->redirect('/faixas');
         }
         
         $apacsEmitidas = $this->faixaModel->countApacsEmitidas($id);
         
         if ($apacsEmitidas > 0) {
             Session::flash('error', 'Não é possível excluir uma faixa que já possui APACs emitidas.');
-            header('Location: /faixas');
-            exit;
+            $this->redirect('/faixas');
         }
         
         $this->faixaModel->delete($id);
@@ -158,11 +157,10 @@ class FaixaController
             'usuario_id' => $user['id'],
             'tabela_afetada' => 'faixas',
             'registro_id' => $id,
-            'detalhes' => "Faixa de {$faixa['inicial_13dig']} a {$faixa['final_13dig']} excluída"
+            'detalhes' => "Faixa de {$faixa['numero_inicial']} a {$faixa['numero_final']} excluída"
         ]);
         
         Session::flash('success', 'Faixa excluída com sucesso!');
-        header('Location: /faixas');
-        exit;
+        $this->redirect('/faixas');
     }
 }

@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Detalhes do Estabelecimento - Sistema APAC';
 ob_start();
 
@@ -29,13 +31,13 @@ function formatarData($data) {
             <p class="text-gray-600">Visualize as informações completas do estabelecimento</p>
         </div>
         <div class="flex gap-3">
-            <a href="/estabelecimentos/<?= $estabelecimento['id'] ?>/edit" class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
+            <a href="<?= UrlHelper::url('/estabelecimentos/' . $estabelecimento['id'] . '/edit') ?>" class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
                 Editar
             </a>
-            <a href="/estabelecimentos" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
+            <a href="<?= UrlHelper::url('/estabelecimentos') ?>" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
                 Voltar
             </a>
         </div>
@@ -174,7 +176,7 @@ function formatarData($data) {
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-right text-sm">
-                                        <a href="/laudos/<?= $laudo['id'] ?>" class="text-blue-600 hover:text-blue-900">Ver</a>
+                                        <a href="<?= UrlHelper::url('/laudos/' . $laudo['id']) ?>" class="text-blue-600 hover:text-blue-900">Ver</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -190,13 +192,13 @@ function formatarData($data) {
         <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
             <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Ações</h2>
             <div class="space-y-3">
-                <a href="/estabelecimentos/<?= $estabelecimento['id'] ?>/edit" class="block w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-center rounded-lg transition">
+                <a href="<?= UrlHelper::url('/estabelecimentos/' . $estabelecimento['id'] . '/edit') ?>" class="block w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-center rounded-lg transition">
                     Editar Estabelecimento
                 </a>
-                <a href="/laudos/create?estabelecimento_id=<?= $estabelecimento['id'] ?>" class="block w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg transition">
+                <a href="<?= UrlHelper::url('/laudos/create?estabelecimento_id=' . $estabelecimento['id']) ?>" class="block w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg transition">
                     Emitir Novo Laudo
                 </a>
-                <a href="/estabelecimentos" class="block w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-center rounded-lg transition">
+                <a href="<?= UrlHelper::url('/estabelecimentos') ?>" class="block w-full px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-center rounded-lg transition">
                     Voltar para Lista
                 </a>
             </div>
@@ -224,5 +226,5 @@ function formatarData($data) {
 
 <?php
 $content = ob_get_clean();
-require __DIR__ . '/../layout.php';
+require VIEWS_PATH . '/layouts/app.php';
 ?>

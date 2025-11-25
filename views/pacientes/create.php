@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Novo Paciente - Sistema APAC';
 ob_start();
 ?>
@@ -9,13 +11,13 @@ ob_start();
             <h1 class="text-3xl font-bold text-gray-800">Novo Paciente</h1>
             <p class="text-gray-600">Cadastre um novo paciente no sistema</p>
         </div>
-        <a href="/pacientes" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
+        <a href="<?= UrlHelper::url('/pacientes') ?>" class="inline-flex items-center bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">
             Voltar
         </a>
     </div>
 </div>
 
-<form action="/pacientes/store" method="POST" class="bg-white rounded-lg shadow-md p-6" x-data="{
+<form action="<?= UrlHelper::url('/pacientes') ?>" method="POST" class="bg-white rounded-lg shadow-md p-6" x-data="{
     cns: '',
     cpf: '',
     cep: '',
@@ -23,7 +25,80 @@ ob_start();
     cpfValido: true,
     validandoCns: false,
     validandoCpf: false,
-    buscandoCep: false
+    buscandoCep: false,
+    validarCns() {
+        const cns = this.cns.replace(/\D/g, '');
+        if (cns.length !== 15) {
+            this.cnsValido = false;
+            return;
+        }
+        
+        this.validandoCns = true;
+        
+        fetch(`/api/validar-cns?cns=${cns}`)
+            .then(response => response.json())
+            .then(data => {
+                this.cnsValido = data.valido;
+                this.validandoCns = false;
+            })
+            .catch(() => {
+                this.cnsValido = false;
+                this.validandoCns = false;
+            });
+    },
+    validarCpf() {
+        const cpf = this.cpf.replace(/\D/g, '');
+        if (!cpf) {
+            this.cpfValido = true;
+            return;
+        }
+        
+        if (cpf.length !== 11) {
+            this.cpfValido = false;
+            return;
+        }
+        
+        this.validandoCpf = true;
+        
+        fetch(`/api/validar-cpf?cpf=${cpf}`)
+            .then(response => response.json())
+            .then(data => {
+                this.cpfValido = data.valido;
+                this.validandoCpf = false;
+            })
+            .catch(() => {
+                this.cpfValido = false;
+                this.validandoCpf = false;
+            });
+    },
+    buscarCep() {
+        const cep = this.cep.replace(/\D/g, '');
+        if (cep.length !== 8) return;
+        
+        this.buscandoCep = true;
+        
+        // Usar endpoint backend que tenta BrasilAPI primeiro e ViaCEP como fallback
+        fetch(`/api/buscar-cep?cep=${cep}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('logradouro').value = data.logradouro || '';
+                    document.getElementById('bairro').value = data.bairro || '';
+                    document.getElementById('municipio').value = data.municipio || '';
+                    // UF não existe mais na tabela, mas mantemos no formulário para referência
+                    if (document.getElementById('uf')) {
+                        document.getElementById('uf').value = data.uf || '';
+                    }
+                } else {
+                    console.error('Erro ao buscar CEP:', data.message || 'CEP não encontrado');
+                }
+                this.buscandoCep = false;
+            })
+            .catch(error => {
+                console.error('Erro ao buscar CEP:', error);
+                this.buscandoCep = false;
+            });
+    }
 }">
     <!-- Dados Pessoais -->
     <div class="mb-8">
@@ -264,88 +339,33 @@ ob_start();
 
     <!-- Botões de Ação -->
     <div class="flex gap-4 justify-end pt-4 border-t">
-        <a href="/pacientes" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-lg transition">
+        <a href="<?= UrlHelper::url('/pacientes') ?>" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-lg transition">
             Cancelar
         </a>
         <button 
             type="submit" 
-            :disabled="!cnsValido || (cpf && !cpfValido)"
-            :class="(!cnsValido || (cpf && !cpfValido)) ? 'opacity-50 cursor-not-allowed' : ''"
-            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition">
+            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
+            :class="(!cnsValido || (cpf && !cpfValido)) ? 'opacity-50 cursor-not-allowed' : ''">
             Cadastrar Paciente
         </button>
     </div>
 </form>
 
 <script>
-function validarCns() {
-    const cns = this.cns.replace(/\D/g, '');
-    if (cns.length !== 15) {
-        this.cnsValido = false;
-        return;
-    }
-    
-    this.validandoCns = true;
-    
-    fetch(`/api/validar-cns?cns=${cns}`)
-        .then(response => response.json())
-        .then(data => {
-            this.cnsValido = data.valido;
-            this.validandoCns = false;
-        })
-        .catch(() => {
-            this.cnsValido = false;
-            this.validandoCns = false;
-        });
-}
-
-function validarCpf() {
-    const cpf = this.cpf.replace(/\D/g, '');
-    if (!cpf) {
-        this.cpfValido = true;
-        return;
-    }
-    
-    if (cpf.length !== 11) {
-        this.cpfValido = false;
-        return;
-    }
-    
-    this.validandoCpf = true;
-    
-    fetch(`/api/validar-cpf?cpf=${cpf}`)
-        .then(response => response.json())
-        .then(data => {
-            this.cpfValido = data.valido;
-            this.validandoCpf = false;
-        })
-        .catch(() => {
-            this.cpfValido = false;
-            this.validandoCpf = false;
-        });
-}
-
-function buscarCep() {
-    const cep = this.cep.replace(/\D/g, '');
-    if (cep.length !== 8) return;
-    
-    this.buscandoCep = true;
-    
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-        .then(response => response.json())
-        .then(data => {
-            if (!data.erro) {
-                document.getElementById('logradouro').value = data.logradouro || '';
-                document.getElementById('bairro').value = data.bairro || '';
-                document.getElementById('municipio').value = data.localidade || '';
-                document.getElementById('uf').value = data.uf || '';
+// Fallback: garantir que o formulário funcione mesmo sem Alpine.js
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action="<?= UrlHelper::url('/pacientes') ?>"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const cnsInput = form.querySelector('input[name="cns"]');
+            if (cnsInput && cnsInput.value.replace(/\D/g, '').length !== 15) {
+                e.preventDefault();
+                alert('CNS deve ter 15 dígitos');
+                return false;
             }
-            this.buscandoCep = false;
-        })
-        .catch(() => {
-            this.buscandoCep = false;
         });
-}
+    }
+});
 </script>
 
 <?php

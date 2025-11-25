@@ -1,3 +1,142 @@
 ---
 alwaysApply: true
 ---
+
+You are a developer working on the ApacSimplificado project. Your goal is to maintain consistency, ensure scalability, and follow the established Vanilla PHP MVC architecture.
+1. Development Guidelines
+Language & Version: Use PHP 8.0+ features where appropriate (typed properties, return types, etc.).
+Architecture: Follow the MVC (Model-View-Controller) pattern with a dedicated Service Layer for business logic.
+Controllers: Handle HTTP input, call Services, and render Views. Do not put business logic here.
+Services: Contain all business rules, calculations, and validations.
+Models: Handle database interactions (CRUD). All models extend BaseModel.
+No Framework Dependency: This is a Vanilla PHP project. Do not introduce large framework dependencies (like Laravel or Symfony) unless explicitly authorized.
+Dependency Injection: Use Constructor Injection manually to inject Services into Controllers and Models into Services.
+Code Styling:
+Follow PSR-12 coding standards.
+Ensure strict typing (declare(strict_types=1);) is used where possible (optional but recommended for new files).
+Developer Experience (DX):
+Use comprehensive DocBlocks (/** ... */) for all methods to ensure IDE autocompletion and type hinting.
+Keep Controllers "thin" and Models "dumb".
+
+2. Coding Standards and Conventions
+File Names:
+Classes: Use PascalCase matching the class name (e.g., ApacController.php, EmissaoService.php).
+Views: Use snake_case or kebab-case (e.g., apac/create.php, layouts/app.php).
+Config/Utils: Use PascalCase for classes (Router.php) and snake_case for config files (database.php).
+Naming Conventions:
+Classes & Interfaces: PascalCase (e.g., ApacController, BaseModel).
+Methods: camelCase (e.g., findAll, gerarNumeroApac).
+Variables & Properties: camelCase (e.g., $apacModel, $userSession).
+Database Columns: snake_case (e.g., numero_apac, digito_verificador).
+Constants: SCREAMING_SNAKE_CASE (e.g., VIEWS_PATH, DB_HOST).
+Database Interaction:
+Always use Prepared Statements (PDO) in Models to prevent SQL Injection.
+Do not write raw SQL queries in Controllers or Services.
+
+3. Project Structure and File Organization
+The project follows a custom directory structure designed for simplicity and separation of concerns.
+src/: The core application logic (Autoloaded namespace App\).
+Controllers/: Entry point for requests (e.g., ApacController.php). Validates input and orchestrates response.
+Services/: Business logic isolation (e.g., EmissaoService.php). Handles complex operations like generating verification digits or managing APAC status.
+Models/: Database access objects (e.g., Apac.php). Extends BaseModel for common PDO operations.
+Middleware/: Request filtering (e.g., AuthMiddleware.php).
+Utils/: Helper classes (e.g., Session.php, Router.php, Validation.php, UrlHelper.php).
+Database/: Database connection wrapper (Database.php).
+views/: Presentation layer.
+[module]/: Folder per entity (e.g., apac/, pacientes/) containing index.php, create.php, etc.
+layouts/: Master templates (e.g., app.php).
+components/: Reusable UI parts (e.g., navbar.php, alerts.php).
+public/: The web root.
+index.php: The front controller that initializes the app and router.
+css/, js/: Static assets.
+config/: Configuration files.
+database.php: Database connection settings (env aware).
+app.php: General application settings.
+constants.php: Application constants including BASE_URL (auto-detected).
+
+4. URL Generation and Base Path Handling
+Base Path Detection:
+The system automatically detects if it's running in a subdirectory (e.g., /ApacSimplificado/) or at the root.
+BASE_URL constant is defined in config/constants.php and detected automatically from SCRIPT_NAME.
+Router automatically removes base path from REQUEST_URI before matching routes.
+URL Generation:
+Always use Router::redirect() or BaseController::redirect() for redirects (never use header('Location:') directly).
+Use UrlHelper::url($path) for generating URLs in views or services.
+Use UrlHelper::asset($path) for static assets (CSS, JS, images).
+Use relative paths starting with / in routes (e.g., '/pacientes', '/dashboard').
+Router will automatically prepend base path when needed.
+Never hardcode URLs with localhost or specific IPs in code.
+Example:
+// ✅ CORRETO
+Router::redirect('/pacientes');
+$url = UrlHelper::url('/pacientes/create');
+$css = UrlHelper::asset('css/style.css');
+
+// ❌ INCORRETO
+header('Location: /pacientes');
+$url = '/ApacSimplificado/pacientes'; // Hardcoded base path
+$url = 'http://localhost:8000/pacientes'; // Hardcoded host
+
+5. Testing and Documentation
+Testing Strategy:
+Current: Manual testing of flows (Issue -> Print -> Audit).
+Proposed Standard: Implement PHPUnit for Unit Testing, specifically for the Service Layer (e.g., testing ApacService::gerarNumeroApac and DigitoVerificadorService).
+Create a tests/ directory at the root to mirror the src/ structure.
+Test both local access (localhost) and network access (subdirectory) scenarios.
+Documentation:
+README.md: Contains setup instructions, database schema import (database/schema.sql), and environment configuration.
+CONFIGURACAO_REDE.md: Contains detailed instructions for configuring network access (Apache, Firewall, MySQL).
+Code Comments:
+Controllers: Explain the route/action purpose.
+Services: Explain the business rule being enforced (especially for APAC number generation and specific logic).
+API References: If ApiController.php is expanded, use Swagger/OpenAPI style comments to document endpoints.
+Example: Adding a New Feature (Guideline in Action)
+Task: Create a RelatorioService to generate monthly stats.
+Create File: src/Services/RelatorioService.php
+Class Name: RelatorioService
+
+Code:
+    <?php    namespace App\Services;    use App\Models\Apac;    class RelatorioService    {        private $apacModel;        public function __construct()        {            $this->apacModel = new Apac();        }        /**         * Gera estatísticas mensais de emissão.         *          * @param int $mes         * @param int $ano         * @return array         */        public function gerarStatsMensal(int $mes, int $ano): array        {            // Business logic here...            return $this->apacModel->countByMonth($mes, $ano);        }    }
+
+Integration: Inject into RelatorioController and call gerarStatsMensal.
+
+Example: Redirecting in Controller (URL Handling)
+Task: Redirect after successful form submission.
+
+Code:
+    <?php
+    namespace App\Controllers;
+    
+    use App\Utils\Router;
+    
+    class PacienteController extends BaseController
+    {
+        public function store()
+        {
+            // ... validation and save logic ...
+            
+            // ✅ CORRETO - Uses Router::redirect() which handles base path
+            $this->redirect('/pacientes');
+            
+            // ❌ INCORRETO - Hardcoded header() doesn't handle base path
+            // header('Location: /pacientes');
+            // exit;
+        }
+    }
+
+Example: Generating URLs in Views
+Task: Create links in views that work in both local and network environments.
+
+Code:
+    <?php
+    use App\Utils\UrlHelper;
+    ?>
+    
+    <!-- ✅ CORRETO - Uses UrlHelper -->
+    <a href="<?= UrlHelper::url('/pacientes') ?>">Listar Pacientes</a>
+    <a href="<?= UrlHelper::url('/pacientes/create') ?>">Novo Paciente</a>
+    <link rel="stylesheet" href="<?= UrlHelper::asset('css/style.css') ?>">
+    
+    <!-- ❌ INCORRETO - Hardcoded paths -->
+    <!-- <a href="/ApacSimplificado/pacientes">Listar Pacientes</a> -->
+    <!-- <link rel="stylesheet" href="/ApacSimplificado/public/css/style.css"> -->

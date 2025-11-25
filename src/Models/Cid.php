@@ -12,23 +12,47 @@ class Cid extends BaseModel
         return $this->db->fetchOne($sql, ['codigo' => $codigo]);
     }
     
-    public function search($term)
+    public function findPaginated($limit = 10, $offset = 0)
     {
+        $limit = max(1, min(100, (int)$limit));
+        $offset = max(0, (int)$offset);
+        $sql = "SELECT * FROM {$this->table} ORDER BY codigo ASC LIMIT {$limit} OFFSET {$offset}";
+        return $this->db->fetchAll($sql);
+    }
+    
+    public function searchPaginated($term, $limit = 10, $offset = 0)
+    {
+        $limit = max(1, min(100, (int)$limit));
+        $offset = max(0, (int)$offset);
         $termLike = "%{$term}%";
         $sql = "SELECT * FROM {$this->table} 
                 WHERE codigo LIKE :term1 
                    OR descricao LIKE :term2 
                 ORDER BY codigo ASC 
-                LIMIT 50";
-        return $this->db->fetchAll($sql, ['term1' => $termLike, 'term2' => $termLike]);
+                LIMIT {$limit} OFFSET {$offset}";
+        return $this->db->fetchAll($sql, [
+            'term1' => $termLike,
+            'term2' => $termLike
+        ]);
     }
     
-    public function findByCategoria($categoria)
+    public function searchCount($term)
     {
-        $categoria = strtoupper(substr($categoria, 0, 1));
-        $sql = "SELECT * FROM {$this->table} 
-                WHERE codigo LIKE :categoria 
-                ORDER BY codigo ASC";
-        return $this->db->fetchAll($sql, ['categoria' => $categoria . '%']);
+        $termLike = "%{$term}%";
+        $sql = "SELECT COUNT(*) as total FROM {$this->table} 
+                WHERE codigo LIKE :term1 
+                   OR descricao LIKE :term2";
+        $result = $this->db->fetchOne($sql, [
+            'term1' => $termLike,
+            'term2' => $termLike
+        ]);
+        return $result['total'] ?? 0;
+    }
+    
+    public function countTotal()
+    {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
+        $result = $this->db->fetchOne($sql);
+        return $result['total'] ?? 0;
     }
 }

@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Estabelecimentos - Sistema APAC';
 ob_start();
 ?>
@@ -10,7 +12,7 @@ ob_start();
             <p class="text-gray-600">Gerencie os estabelecimentos cadastrados no sistema</p>
         </div>
         <div class="mt-4 md:mt-0">
-            <a href="/estabelecimentos/create" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">
+            <a href="<?= UrlHelper::url('/estabelecimentos/create') ?>" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -22,67 +24,7 @@ ob_start();
 
 <!-- Busca em Tempo Real -->
 <div class="bg-white rounded-lg shadow-md p-6 mb-6" 
-     x-data="{
-         searchTerm: '', 
-         loading: false,
-         estabelecimentos: [],
-         totalEstabelecimentos: 0,
-         currentPage: 1,
-         totalPages: 1,
-         init() {
-             this.estabelecimentos = <?= json_encode($estabelecimentos ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-             this.totalEstabelecimentos = <?= $totalEstabelecimentos ?? 0 ?>;
-             this.currentPage = <?= $currentPage ?? 1 ?>;
-             this.totalPages = <?= $totalPages ?? 1 ?>;
-         },
-         formatarCnpj(cnpj) {
-             if (!cnpj || cnpj.length !== 14) return cnpj;
-             return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-         },
-         buscarEstabelecimentos() {
-             this.loading = true;
-             fetch('/estabelecimentos/ajax/search?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage)
-                 .then(response => response.json())
-                 .then(data => {
-                     this.estabelecimentos = data.estabelecimentos || [];
-                     this.totalEstabelecimentos = data.total || 0;
-                     this.totalPages = data.totalPages || 1;
-                     this.currentPage = data.currentPage || 1;
-                     this.loading = false;
-                 })
-                 .catch(error => {
-                     console.error('Erro ao buscar estabelecimentos:', error);
-                     this.loading = false;
-                 });
-         },
-         carregarPagina(page) {
-             if (page < 1 || page > this.totalPages) return;
-             this.currentPage = page;
-             this.buscarEstabelecimentos();
-         },
-         confirmarExclusao(id) {
-             if (confirm('Tem certeza que deseja excluir este estabelecimento? Esta ação não pode ser desfeita.')) {
-                 fetch('/estabelecimentos/' + id + '/delete', {
-                     method: 'POST',
-                     headers: {
-                         'Content-Type': 'application/json'
-                     }
-                 })
-                 .then(response => response.json())
-                 .then(data => {
-                     if (data.success) {
-                         window.location.reload();
-                     } else {
-                         alert('Erro ao excluir estabelecimento: ' + data.message);
-                     }
-                 })
-                 .catch(error => {
-                     alert('Erro ao excluir estabelecimento');
-                     console.error(error);
-                 });
-             }
-         }
-     }">
+     x-data="estabelecimentoListData()">
     <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Estabelecimento</label>
         <div class="relative">
@@ -156,8 +98,8 @@ ob_start();
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a :href="'/estabelecimentos/' + est.id" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
-                                <a :href="'/estabelecimentos/' + est.id + '/edit'" class="text-green-600 hover:text-green-900 mr-3">Editar</a>
+                                <a :href="'<?= UrlHelper::url('/estabelecimentos/') ?>' + est.id" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
+                                <a :href="'<?= UrlHelper::url('/estabelecimentos/') ?>' + est.id + '/edit'" class="text-green-600 hover:text-green-900 mr-3">Editar</a>
                                 <button @click="confirmarExclusao(est.id)" class="text-red-600 hover:text-red-900">Excluir</button>
                             </td>
                         </tr>
@@ -209,7 +151,7 @@ ob_start();
                         </svg>
                     </button>
                     
-                    <template x-for="page in totalPages" :key="page">
+                    <template x-for="page in getPagesArray()" :key="page">
                         <button
                             @click="carregarPagina(page)"
                             :class="page === currentPage ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
@@ -233,7 +175,80 @@ ob_start();
     </div>
 </div>
 
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('estabelecimentoListData', () => ({
+        searchTerm: '', 
+        loading: false,
+        estabelecimentos: [],
+        totalEstabelecimentos: 0,
+        currentPage: 1,
+        totalPages: 1,
+        init() {
+            this.estabelecimentos = <?= json_encode($estabelecimentos ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+            this.totalEstabelecimentos = <?= $totalEstabelecimentos ?? 0 ?>;
+            this.currentPage = <?= $currentPage ?? 1 ?>;
+            this.totalPages = <?= $totalPages ?? 1 ?>;
+        },
+        formatarCnpj(cnpj) {
+            if (!cnpj || cnpj.length !== 14) return cnpj;
+            return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+        },
+        buscarEstabelecimentos() {
+            this.loading = true;
+            fetch('<?= UrlHelper::url('/estabelecimentos/ajax/search') ?>?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage)
+                .then(response => response.json())
+                .then(data => {
+                    this.estabelecimentos = data.estabelecimentos || [];
+                    this.totalEstabelecimentos = data.total || 0;
+                    this.totalPages = data.totalPages || 1;
+                    this.currentPage = data.currentPage || 1;
+                    this.loading = false;
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar estabelecimentos:', error);
+                    this.loading = false;
+                });
+        },
+        carregarPagina(page) {
+            if (page < 1 || page > this.totalPages) return;
+            this.currentPage = page;
+            this.buscarEstabelecimentos();
+        },
+        confirmarExclusao(id) {
+            if (confirm('Tem certeza que deseja excluir este estabelecimento? Esta ação não pode ser desfeita.')) {
+                fetch('<?= UrlHelper::url('/estabelecimentos/') ?>' + id + '/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Erro ao excluir estabelecimento: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Erro ao excluir estabelecimento');
+                    console.error(error);
+                });
+            }
+        },
+        getPagesArray() {
+            const pages = [];
+            for (let i = 1; i <= this.totalPages; i++) {
+                pages.push(i);
+            }
+            return pages;
+        }
+    }));
+});
+</script>
+
 <?php
 $content = ob_get_clean();
-require __DIR__ . '/../layout.php';
+require VIEWS_PATH . '/layouts/app.php';
 ?>

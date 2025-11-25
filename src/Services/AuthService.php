@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Database\Database;
 use App\Utils\Session;
+use App\Utils\Router;
 use App\Models\Usuario;
 
 class AuthService
@@ -69,8 +70,7 @@ class AuthService
     {
         if (!$this->check()) {
             Session::flash('error', 'Você precisa estar autenticado para acessar esta página.');
-            header('Location: /login');
-            exit;
+            Router::redirect('/login');
         }
     }
     

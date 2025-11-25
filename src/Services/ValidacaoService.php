@@ -36,63 +36,53 @@ class ValidacaoService
     
     public static function validarCns($cns)
     {
-        if (empty($cns)) {
-            return false;
-        }
-        
+        // Garante apenas números
         $cns = preg_replace('/[^0-9]/', '', $cns);
         
         if (strlen($cns) != 15) {
             return false;
         }
         
-        $firstDigit = substr($cns, 0, 1);
+        $primeiroDigito = substr($cns, 0, 1);
         
-        if (in_array($firstDigit, ['1', '2'])) {
-            return self::validarCnsInicia12($cns);
-        } elseif (in_array($firstDigit, ['7', '8', '9'])) {
-            return self::validarCnsInicia789($cns);
+        // Validação para Início 1 ou 2 (Geralmente Definitivos/PIS)
+        if ($primeiroDigito == '1' || $primeiroDigito == '2') {
+            $pis = substr($cns, 0, 11);
+            $soma = 0;
+            
+            for ($i = 0; $i < 11; $i++) {
+                $soma += intval(substr($pis, $i, 1)) * (15 - $i);
+            }
+            
+            $resto = $soma % 11;
+            $dv = 11 - $resto;
+            
+            if ($dv == 11) {
+                $dv = 0;
+            }
+            
+            if ($dv == 10) {
+                $soma += 2;
+                $resto = $soma % 11;
+                $dv = 11 - $resto;
+                $resultado = $pis . "001" . $dv;
+            } else {
+                $resultado = $pis . "000" . $dv;
+            }
+            
+            return $cns === $resultado;
+        }
+        
+        // Validação para Início 7, 8 ou 9 (Provisórios)
+        if ($primeiroDigito == '7' || $primeiroDigito == '8' || $primeiroDigito == '9') {
+            $soma = 0;
+            for ($i = 0; $i < 15; $i++) {
+                $soma += intval(substr($cns, $i, 1)) * (15 - $i);
+            }
+            return ($soma % 11) == 0;
         }
         
         return false;
-    }
-    
-    private static function validarCnsInicia12($cns)
-    {
-        $pis = substr($cns, 0, 11);
-        $soma = 0;
-        
-        for ($i = 0; $i < 11; $i++) {
-            $soma += intval(substr($pis, $i, 1)) * (15 - $i);
-        }
-        
-        $resto = $soma % 11;
-        $dv = 11 - $resto;
-        
-        if ($dv == 11) {
-            $dv = 0;
-        }
-        
-        if ($dv == 10) {
-            $soma += 2;
-            $resto = $soma % 11;
-            $dv = 11 - $resto;
-            $resultado = $pis . "001" . $dv;
-        } else {
-            $resultado = $pis . "000" . $dv;
-        }
-        
-        return $cns === $resultado;
-    }
-    
-    private static function validarCnsInicia789($cns)
-    {
-        $soma = 0;
-        for ($i = 0; $i < 15; $i++) {
-            $soma += $cns[$i] * (15 - $i);
-        }
-        
-        return ($soma % 11) == 0;
     }
     
     public static function validarCep($cep)

@@ -51,7 +51,7 @@ class ApacController
         
         if (!$faixaId) {
             Session::flash('error', 'Selecione uma faixa válida.');
-            header('Location: /apacs/create');
+            $this->redirect('/apacs/create');
             exit;
         }
         
@@ -60,10 +60,10 @@ class ApacController
         
         if ($result['success']) {
             Session::flash('success', 'APAC emitida com sucesso! Número: ' . $result['numero_14dig']);
-            header('Location: /apacs');
+            $this->redirect('/apacs');
         } else {
             Session::flash('error', $result['message']);
-            header('Location: /apacs/create');
+            $this->redirect('/apacs/create');
         }
         exit;
     }
@@ -81,7 +81,6 @@ class ApacController
             Session::flash('error', 'Erro ao marcar APAC como impressa.');
         }
         
-        header('Location: /apacs');
-        exit;
+        $this->redirect('/apacs');
     }
 }

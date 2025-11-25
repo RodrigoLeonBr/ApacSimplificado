@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Faixas de APAC - Sistema APAC';
 ob_start();
 ?>
@@ -8,7 +10,7 @@ ob_start();
         <h1 class="text-3xl font-bold text-gray-800">Faixas de APAC</h1>
         <p class="text-gray-600">Gerenciamento de faixas de números</p>
     </div>
-    <a href="/faixas/create" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+    <a href="<?= UrlHelper::url('/faixas/create') ?>" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
         Nova Faixa
     </a>
 </div>
@@ -67,9 +69,9 @@ ob_start();
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="/faixas/<?= htmlspecialchars($faixa['id']) ?>" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
+                            <a href="<?= UrlHelper::url('/faixas/' . $faixa['id']) ?>" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
                             <?php if ($faixa['utilizados'] == 0): ?>
-                                <form method="POST" action="/faixas/<?= htmlspecialchars($faixa['id']) ?>/delete" style="display: inline;">
+                                <form method="POST" action="<?= UrlHelper::url('/faixas/' . $faixa['id'] . '/delete') ?>" style="display: inline;">
                                     <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Deseja realmente excluir esta faixa?')">Excluir</button>
                                 </form>
                             <?php endif; ?>

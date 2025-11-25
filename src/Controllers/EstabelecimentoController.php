@@ -77,6 +77,9 @@ class EstabelecimentoController extends BaseController
         
         $data = $this->getInput();
         
+        // Limpar e preparar dados
+        $data = $this->prepareData($data);
+        
         $errors = $this->validateEstabelecimento($data);
         if (!empty($errors)) {
             $this->flash(implode(', ', $errors), 'error');
@@ -88,20 +91,93 @@ class EstabelecimentoController extends BaseController
             $this->redirect('/estabelecimentos/create');
         }
         
-        if ($this->estabelecimentoModel->findByCnpj($data['cnpj'])) {
+        if (!empty($data['cnpj']) && $this->estabelecimentoModel->findByCnpj($data['cnpj'])) {
             $this->flash('CNPJ já cadastrado no sistema', 'error');
             $this->redirect('/estabelecimentos/create');
         }
         
-        $id = $this->estabelecimentoModel->create($data);
-        
-        if ($id) {
-            $this->flash('Estabelecimento cadastrado com sucesso', 'success');
-            $this->redirect('/estabelecimentos/' . $id);
-        } else {
-            $this->flash('Erro ao cadastrar estabelecimento', 'error');
+        try {
+            // Log dos dados antes de inserir (apenas para debug)
+            error_log('Dados a serem inseridos: ' . json_encode($data));
+            
+            $id = $this->estabelecimentoModel->create($data);
+            
+            if ($id) {
+                $this->flash('Estabelecimento cadastrado com sucesso', 'success');
+                $this->redirect('/estabelecimentos/' . $id);
+            } else {
+                error_log('Erro: create() retornou false ou null');
+                $this->flash('Erro ao cadastrar estabelecimento', 'error');
+                $this->redirect('/estabelecimentos/create');
+            }
+        } catch (\PDOException $e) {
+            error_log('Erro PDO ao cadastrar estabelecimento: ' . $e->getMessage());
+            error_log('SQL State: ' . $e->getCode());
+            $this->flash('Erro ao cadastrar estabelecimento: ' . $e->getMessage(), 'error');
+            $this->redirect('/estabelecimentos/create');
+        } catch (\Exception $e) {
+            error_log('Erro ao cadastrar estabelecimento: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            $this->flash('Erro ao cadastrar estabelecimento: ' . $e->getMessage(), 'error');
             $this->redirect('/estabelecimentos/create');
         }
+    }
+    
+    private function prepareData($data)
+    {
+        // Limpar CNPJ (remover caracteres não numéricos)
+        if (!empty($data['cnpj'])) {
+            $cnpjLimpo = preg_replace('/[^0-9]/', '', $data['cnpj']);
+            $data['cnpj'] = !empty($cnpjLimpo) ? $cnpjLimpo : null;
+        } else {
+            $data['cnpj'] = null;
+        }
+        
+        // Limpar CNES (remover caracteres não numéricos)
+        if (!empty($data['cnes'])) {
+            $data['cnes'] = preg_replace('/[^0-9]/', '', $data['cnes']);
+        }
+        
+        // Limpar CEP (remover caracteres não numéricos)
+        if (!empty($data['cep'])) {
+            $data['cep'] = preg_replace('/[^0-9]/', '', $data['cep']);
+        }
+        
+        // Limpar telefone (remover caracteres não numéricos)
+        if (!empty($data['telefone'])) {
+            $data['telefone'] = preg_replace('/[^0-9]/', '', $data['telefone']);
+        }
+        
+        // Tratar complemento (pode ser vazio)
+        if (empty($data['complemento'])) {
+            $data['complemento'] = null;
+        }
+        
+        // Tratar nome_fantasia (pode ser vazio)
+        if (empty($data['nome_fantasia'])) {
+            $data['nome_fantasia'] = null;
+        }
+        
+        // Tratar telefone (pode ser vazio)
+        if (empty($data['telefone'])) {
+            $data['telefone'] = null;
+        }
+        
+        // Tratar email (pode ser vazio)
+        if (empty($data['email'])) {
+            $data['email'] = null;
+        }
+        
+        // Status padrão se não informado
+        if (empty($data['status'])) {
+            $data['status'] = 'ativo';
+        }
+        
+        // Remover campo UF se não existir na tabela (verificar estrutura do banco)
+        // Se a tabela tiver UF, manter; caso contrário, remover
+        // Por enquanto, vamos manter e deixar o banco dar erro se não existir
+        
+        return $data;
     }
     
     public function edit($id)

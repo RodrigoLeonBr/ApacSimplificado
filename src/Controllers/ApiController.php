@@ -116,4 +116,79 @@ class ApiController extends BaseController
             'message' => $valido ? 'CNPJ válido' : 'CNPJ inválido'
         ]);
     }
+    
+    public function buscarCep()
+    {
+        AuthMiddleware::handle();
+        
+        $cep = $_GET['cep'] ?? '';
+        $cep = preg_replace('/[^0-9]/', '', $cep);
+        
+        if (strlen($cep) !== 8) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'CEP deve ter 8 dígitos'
+            ], 400);
+            return;
+        }
+        
+        // Tentar BrasilAPI primeiro (API gratuita mantida pela comunidade)
+        $endpointBrasilAPI = "https://brasilapi.com.br/api/cep/v1/{$cep}";
+        
+        $ch = curl_init($endpointBrasilAPI);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200 && $response) {
+            $data = json_decode($response, true);
+            
+            if (isset($data['street']) || isset($data['neighborhood'])) {
+                $this->jsonResponse([
+                    'success' => true,
+                    'logradouro' => $data['street'] ?? '',
+                    'bairro' => $data['neighborhood'] ?? '',
+                    'municipio' => $data['city'] ?? '',
+                    'uf' => $data['state'] ?? '',
+                    'cep' => $data['cep'] ?? $cep
+                ]);
+                return;
+            }
+        }
+        
+        // Fallback para ViaCEP
+        $endpointViaCEP = "https://viacep.com.br/ws/{$cep}/json/";
+        
+        $ch = curl_init($endpointViaCEP);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200 && $response) {
+            $data = json_decode($response, true);
+            
+            if (!isset($data['erro'])) {
+                $this->jsonResponse([
+                    'success' => true,
+                    'logradouro' => $data['logradouro'] ?? '',
+                    'bairro' => $data['bairro'] ?? '',
+                    'municipio' => $data['localidade'] ?? '',
+                    'uf' => $data['uf'] ?? '',
+                    'cep' => $data['cep'] ?? $cep
+                ]);
+                return;
+            }
+        }
+        
+        $this->jsonResponse([
+            'success' => false,
+            'message' => 'CEP não encontrado'
+        ], 404);
+    }
 }

@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Emitir APAC - Sistema APAC';
 ob_start();
 ?>
@@ -14,11 +16,11 @@ ob_start();
             <p class="font-medium">Não há faixas disponíveis para emissão de APAC.</p>
             <p class="text-sm mt-2">Por favor, cadastre uma nova faixa antes de emitir APACs.</p>
         </div>
-        <a href="/faixas/create" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg inline-block">
+        <a href="<?= UrlHelper::url('/faixas/create') ?>" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg inline-block">
             Cadastrar Nova Faixa
         </a>
     <?php else: ?>
-        <form method="POST" action="/apacs">
+        <form method="POST" action="<?= UrlHelper::url('/apacs') ?>">
             <div class="mb-6">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="faixa_id">
                     Selecione a Faixa
@@ -49,7 +51,7 @@ ob_start();
             </div>
             
             <div class="flex items-center justify-between">
-                <a href="/apacs" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                <a href="<?= UrlHelper::url('/apacs') ?>" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
                     Cancelar
                 </a>
                 <button 

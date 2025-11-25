@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Database\Database;
+use App\Utils\Router;
 
 abstract class BaseController
 {
@@ -33,13 +34,8 @@ abstract class BaseController
     
     protected function redirect($url)
     {
-        if (!headers_sent()) {
-            header("Location: {$url}");
-            exit;
-        }
-        
-        echo "<script>window.location.href='{$url}';</script>";
-        exit;
+        // Usa Router::redirect que já considera o base path
+        Router::redirect($url);
     }
     
     protected function jsonResponse(array $data, $status = 200)

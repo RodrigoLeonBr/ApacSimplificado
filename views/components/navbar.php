@@ -1,5 +1,7 @@
 <?php
 use App\Utils\Session;
+use App\Utils\UrlHelper;
+
 $userName = Session::get('user_nome', 'Usuário');
 $userRole = Session::get('user_role', 'user');
 ?>
@@ -15,7 +17,7 @@ $userRole = Session::get('user_role', 'user');
                 <?php if ($userRole === 'admin'): ?>
                     <span class="bg-yellow-500 text-xs px-2 py-1 rounded">Admin</span>
                 <?php endif; ?>
-                <a href="/logout" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm">Sair</a>
+                <a href="<?= UrlHelper::url('/logout') ?>" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded text-sm">Sair</a>
             </div>
         </div>
     </div>

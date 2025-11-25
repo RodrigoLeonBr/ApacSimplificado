@@ -5,10 +5,23 @@ Sistema web para gerenciamento e emissão de Autorizações de Procedimentos de 
 ## 🚀 Como Usar
 
 ### Acesso ao Sistema
-1. Acesse a aplicação pela URL do Replit
-2. Faça login com as credenciais padrão:
-   - **Email**: `admin@apac.com`
-   - **Senha**: `admin123`
+
+#### Ambiente Local (Desenvolvimento)
+1. Inicie o servidor PHP built-in:
+   ```bash
+   php -S localhost:8000 -t public
+   ```
+2. Acesse: `http://localhost:8000`
+
+#### Ambiente XAMPP (Produção Local/Rede)
+1. Configure o Apache e MySQL no XAMPP Control Panel
+2. Acesse localmente: `http://localhost/ApacSimplificado/`
+3. Acesse via rede local: `http://192.168.5.130/ApacSimplificado/`
+4. Consulte `CONFIGURACAO_REDE.md` para configurações detalhadas
+
+#### Credenciais Padrão
+- **Email**: `admin@apac.com`
+- **Senha**: `admin123`
 
 ### Fluxo de Trabalho
 
@@ -56,11 +69,14 @@ Sistema web para gerenciamento e emissão de Autorizações de Procedimentos de 
 
 ## 🛠️ Tecnologias
 
-- **Backend**: PHP 8.3 puro (sem frameworks)
-- **Banco de Dados**: MySQL 5.7 (hospedagem remota) com PDO
+- **Backend**: PHP 8.0+ puro (sem frameworks)
+- **Banco de Dados**: MySQL 5.7 (hospedagem remota ou local) com PDO
 - **Frontend**: HTML5 + Tailwind CSS + Alpine.js
-- **Arquitetura**: MVC simplificado
-- **Servidor**: PHP Built-in Server (porta 5000)
+- **Arquitetura**: MVC simplificado com Service Layer
+- **Servidor**: 
+  - Desenvolvimento: PHP Built-in Server (`php -S localhost:8000 -t public`)
+  - Produção: Apache/XAMPP com mod_rewrite
+- **Router**: Custom Router com suporte a subdiretórios e base path automático
 
 ## 📁 Estrutura do Projeto
 
@@ -454,4 +470,65 @@ CONTEXT: unnamed portal parameter $5 = ''
 
 ---
 
-**Versão**: 2.0.0 | **Status**: ✅ Migrado para MySQL e pronto para uso | **Última Atualização**: 24/11/2025
+### 🌐 Fase 6: Configuração de Acesso via Rede Local (Concluída)
+
+#### 6.1 Suporte a Subdiretório e Base Path
+**Data**: 25/11/2025
+
+- ✅ Detecção automática de BASE_URL (`/ApacSimplificado` ou raiz)
+- ✅ Router ajusta REQUEST_URI removendo base path antes de fazer match
+- ✅ Helper `UrlHelper` criado para geração de URLs relativas
+- ✅ Método `redirect()` atualizado para considerar base path
+- ✅ Compatibilidade mantida com acesso local e via rede
+
+#### 6.2 Arquivos Modificados/Criados
+
+**Configuração:**
+- ✅ `config/constants.php` - Detecção automática de BASE_URL
+- ✅ `config/app.php` - Adicionado `base_url` na configuração
+
+**Router e Utils:**
+- ✅ `src/Utils/Router.php` - Suporte para subdiretório implementado
+- ✅ `src/Utils/UrlHelper.php` - Helper criado para geração de URLs
+- ✅ `src/Controllers/BaseController.php` - Usa `Router::redirect()`
+
+**Apache/Configuração:**
+- ✅ `public/.htaccess` - Melhorado para funcionar em subdiretório
+- ✅ `.htaccess` (raiz) - Criado para redirecionar para `public/`
+- ✅ `CONFIGURACAO_REDE.md` - Documentação completa criada
+
+#### 6.3 Funcionalidades Implementadas
+
+**Detecção Automática de Base Path:**
+- Sistema detecta automaticamente se está em subdiretório (`/ApacSimplificado`) ou raiz
+- Remove `/public` do caminho automaticamente
+- Funciona tanto com PHP built-in server quanto Apache
+
+**Router Inteligente:**
+- Remove base path do REQUEST_URI antes de fazer match de rotas
+- Métodos `redirect()` e `url()` consideram base path automaticamente
+- Suporta URLs absolutas (http://) e relativas
+
+**Helper de URLs:**
+- `UrlHelper::url($path)` - Gera URLs com base path
+- `UrlHelper::asset($path)` - Gera URLs para assets estáticos
+- `UrlHelper::basePath()` - Retorna base path atual
+- `UrlHelper::baseUrl()` - Retorna URL completa
+
+#### 6.4 Configurações Necessárias
+
+**Apache/XAMPP:**
+- Verificar `mod_rewrite` habilitado
+- Verificar `AllowOverride All` configurado
+- Reiniciar Apache após configurações
+
+**Firewall (Windows):**
+- Criar regra para porta 80 (HTTP)
+- Criar regra para porta 3306 (MySQL, se necessário)
+
+**Documentação:**
+- Consulte `CONFIGURACAO_REDE.md` para instruções detalhadas
+
+---
+
+**Versão**: 2.1.0 | **Status**: ✅ Suporte a rede local implementado | **Última Atualização**: 25/11/2025

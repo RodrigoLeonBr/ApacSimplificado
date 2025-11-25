@@ -1,5 +1,7 @@
 <?php
 use App\Utils\Session;
+use App\Utils\UrlHelper;
+
 $title = 'Nova Faixa - Sistema APAC';
 $old = Session::getFlash('old', []);
 ob_start();
@@ -11,13 +13,16 @@ ob_start();
 </div>
 
 <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl">
-    <form method="POST" action="/faixas">
+    <?php
+    $errors = Session::getFlash('errors', []);
+    ?>
+    <form method="POST" action="<?= UrlHelper::url('/faixas') ?>">
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="numero_inicial">
-                Número Inicial (13 dígitos)
+                Número Inicial (13 dígitos) <span class="text-red-500">*</span>
             </label>
             <input 
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono <?= isset($errors['numero_inicial']) ? 'border-red-500' : '' ?>"
                 id="numero_inicial" 
                 name="numero_inicial" 
                 type="text" 
@@ -27,15 +32,19 @@ ob_start();
                 value="<?= htmlspecialchars($old['numero_inicial'] ?? '') ?>"
                 required
             >
-            <p class="text-xs text-gray-500 mt-1">Digite exatamente 13 dígitos numéricos</p>
+            <?php if (isset($errors['numero_inicial'])): ?>
+                <p class="text-red-500 text-xs mt-1"><?= htmlspecialchars($errors['numero_inicial']) ?></p>
+            <?php else: ?>
+                <p class="text-xs text-gray-500 mt-1">Digite exatamente 13 dígitos numéricos</p>
+            <?php endif; ?>
         </div>
         
         <div class="mb-6">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="numero_final">
-                Número Final (13 dígitos)
+                Número Final (13 dígitos) <span class="text-red-500">*</span>
             </label>
             <input 
-                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono"
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline font-mono <?= isset($errors['numero_final']) ? 'border-red-500' : '' ?>"
                 id="numero_final" 
                 name="numero_final" 
                 type="text" 
@@ -45,11 +54,15 @@ ob_start();
                 value="<?= htmlspecialchars($old['numero_final'] ?? '') ?>"
                 required
             >
-            <p class="text-xs text-gray-500 mt-1">Digite exatamente 13 dígitos numéricos</p>
+            <?php if (isset($errors['numero_final'])): ?>
+                <p class="text-red-500 text-xs mt-1"><?= htmlspecialchars($errors['numero_final']) ?></p>
+            <?php else: ?>
+                <p class="text-xs text-gray-500 mt-1">Digite exatamente 13 dígitos numéricos</p>
+            <?php endif; ?>
         </div>
         
         <div class="flex items-center justify-between">
-            <a href="/faixas" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+            <a href="<?= UrlHelper::url('/faixas') ?>" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
                 Cancelar
             </a>
             <button 

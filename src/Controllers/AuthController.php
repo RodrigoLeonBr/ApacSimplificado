@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Utils\Router;
 use App\Utils\Session;
 use App\Utils\Validation;
 
@@ -18,8 +19,7 @@ class AuthController
     public function showLogin()
     {
         if ($this->authService->check()) {
-            header('Location: /dashboard');
-            exit;
+            Router::redirect('/dashboard');
         }
         
         require VIEWS_PATH . '/auth/login.php';
@@ -38,28 +38,25 @@ class AuthController
         if (!empty($errors)) {
             Session::flash('errors', $errors);
             Session::flash('old', $_POST);
-            header('Location: /login');
-            exit;
+            Router::redirect('/login');
         }
         
         $result = $this->authService->login($email, $password);
         
         if ($result['success']) {
             Session::flash('success', $result['message']);
-            header('Location: /dashboard');
+            Router::redirect('/dashboard');
         } else {
             Session::flash('error', $result['message']);
             Session::flash('old', $_POST);
-            header('Location: /login');
+            Router::redirect('/login');
         }
-        exit;
     }
     
     public function logout()
     {
         $this->authService->logout();
         Session::flash('success', 'Logout realizado com sucesso.');
-        header('Location: /login');
-        exit;
+        Router::redirect('/login');
     }
 }

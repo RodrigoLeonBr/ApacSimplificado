@@ -77,7 +77,8 @@ class Paciente extends BaseModel
                        l.created_at, l.updated_at,
                        COALESCE(a.numero_apac, '') as numero_apac
                 FROM laudos l
-                LEFT JOIN apacs a ON l.apac_id = a.id
+                LEFT JOIN apacs_laudos al ON l.id = al.laudo_id
+                LEFT JOIN apacs a ON al.apac_id = a.id
                 WHERE l.paciente_id = :paciente_id
                 ORDER BY l.data_laudo DESC, l.created_at DESC
                 LIMIT {$limit}";

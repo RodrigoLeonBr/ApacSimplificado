@@ -8,4 +8,5 @@ return [
     'session_lifetime' => 7200,
     'base_path' => dirname(__DIR__),
     'public_path' => dirname(__DIR__) . '/public',
+    'base_url' => defined('BASE_URL') ? BASE_URL : '',
 ];

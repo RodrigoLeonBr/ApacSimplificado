@@ -3,6 +3,7 @@
 namespace App\Middleware;
 
 use App\Models\Usuario;
+use App\Utils\Router;
 
 class AuthMiddleware
 {
@@ -25,8 +26,7 @@ class AuthMiddleware
                 exit;
             }
             
-            header('Location: /login');
-            exit;
+            Router::redirect('/login');
         }
         
         return true;

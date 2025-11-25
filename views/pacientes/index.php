@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'Pacientes - Sistema APAC';
 ob_start();
 ?>
@@ -10,7 +12,7 @@ ob_start();
             <p class="text-gray-600">Gerencie os pacientes cadastrados no sistema</p>
         </div>
         <div class="mt-4 md:mt-0">
-            <a href="/pacientes/create" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">
+            <a href="<?= UrlHelper::url('/pacientes/create') ?>" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -22,71 +24,7 @@ ob_start();
 
 <!-- Busca em Tempo Real -->
 <div class="bg-white rounded-lg shadow-md p-6 mb-6" 
-     x-data="{
-         searchTerm: '', 
-         loading: false,
-         pacientes: [],
-         totalPacientes: 0,
-         currentPage: 1,
-         totalPages: 1,
-         init() {
-             this.pacientes = <?= json_encode($pacientes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-             this.totalPacientes = <?= $totalPacientes ?? 0 ?>;
-             this.currentPage = <?= $currentPage ?? 1 ?>;
-             this.totalPages = <?= $totalPages ?? 1 ?>;
-         },
-         formatarData(data) {
-             if (!data) return '-';
-             const partes = data.split('-');
-             if (partes.length === 3) {
-                 return partes[2] + '/' + partes[1] + '/' + partes[0];
-             }
-             return data;
-         },
-         buscarPacientes() {
-             this.loading = true;
-             fetch('/pacientes/ajax/search?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage)
-                 .then(response => response.json())
-                 .then(data => {
-                     this.pacientes = data.pacientes || [];
-                     this.totalPacientes = data.total || 0;
-                     this.totalPages = data.totalPages || 1;
-                     this.currentPage = data.currentPage || 1;
-                     this.loading = false;
-                 })
-                 .catch(error => {
-                     console.error('Erro ao buscar pacientes:', error);
-                     this.loading = false;
-                 });
-         },
-         carregarPagina(page) {
-             if (page < 1 || page > this.totalPages) return;
-             this.currentPage = page;
-             this.buscarPacientes();
-         },
-         confirmarExclusao(id) {
-             if (confirm('Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.')) {
-                 fetch('/pacientes/' + id + '/delete', {
-                     method: 'POST',
-                     headers: {
-                         'Content-Type': 'application/json'
-                     }
-                 })
-                 .then(response => response.json())
-                 .then(data => {
-                     if (data.success) {
-                         window.location.reload();
-                     } else {
-                         alert('Erro ao excluir paciente: ' + data.message);
-                     }
-                 })
-                 .catch(error => {
-                     alert('Erro ao excluir paciente');
-                     console.error(error);
-                 });
-             }
-         }
-     }">
+     x-data="pacienteListData()">
     <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Paciente</label>
         <div class="relative">
@@ -142,13 +80,13 @@ ob_start();
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="$data.formatarData(paciente.data_nascimento)"></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="paciente.municipio"></td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <a :href="'/pacientes/' + paciente.id" class="text-blue-600 hover:text-blue-900 mr-3" title="Visualizar">
+                            <a :href="'<?= UrlHelper::url('/pacientes/') ?>' + paciente.id" class="text-blue-600 hover:text-blue-900 mr-3" title="Visualizar">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                 </svg>
                             </a>
-                            <a :href="'/pacientes/' + paciente.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar">
+                            <a :href="'<?= UrlHelper::url('/pacientes/') ?>' + paciente.id + '/edit'" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
@@ -203,7 +141,7 @@ ob_start();
                             <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <template x-for="page in totalPages" :key="page">
+                    <template x-for="page in getPagesArray()" :key="page">
                         <button 
                             @click="carregarPagina(page)"
                             :class="page === currentPage ? 'bg-blue-50 text-blue-600' : 'bg-white text-gray-700 hover:bg-gray-50'"
@@ -226,6 +164,82 @@ ob_start();
     </div>
 </div>
 
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('pacienteListData', () => ({
+        searchTerm: '', 
+        loading: false,
+        pacientes: [],
+        totalPacientes: 0,
+        currentPage: 1,
+        totalPages: 1,
+        init() {
+            this.pacientes = <?= json_encode($pacientes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+            this.totalPacientes = <?= $totalPacientes ?? 0 ?>;
+            this.currentPage = <?= $currentPage ?? 1 ?>;
+            this.totalPages = <?= $totalPages ?? 1 ?>;
+        },
+        formatarData(data) {
+            if (!data) return '-';
+            const partes = data.split('-');
+            if (partes.length === 3) {
+                return partes[2] + '/' + partes[1] + '/' + partes[0];
+            }
+            return data;
+        },
+        buscarPacientes() {
+            this.loading = true;
+            fetch('<?= UrlHelper::url('/pacientes/ajax/search') ?>?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage)
+                .then(response => response.json())
+                .then(data => {
+                    this.pacientes = data.pacientes || [];
+                    this.totalPacientes = data.total || 0;
+                    this.totalPages = data.totalPages || 1;
+                    this.currentPage = data.currentPage || 1;
+                    this.loading = false;
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar pacientes:', error);
+                    this.loading = false;
+                });
+        },
+        carregarPagina(page) {
+            if (page < 1 || page > this.totalPages) return;
+            this.currentPage = page;
+            this.buscarPacientes();
+        },
+        confirmarExclusao(id) {
+            if (confirm('Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.')) {
+                fetch('<?= UrlHelper::url('/pacientes/') ?>' + id + '/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Erro ao excluir paciente: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Erro ao excluir paciente');
+                    console.error(error);
+                });
+            }
+        },
+        getPagesArray() {
+            const pages = [];
+            for (let i = 1; i <= this.totalPages; i++) {
+                pages.push(i);
+            }
+            return pages;
+        }
+    }));
+});
+</script>
 
 <?php
 $content = ob_get_clean();

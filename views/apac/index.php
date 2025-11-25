@@ -1,4 +1,6 @@
 <?php
+use App\Utils\UrlHelper;
+
 $title = 'APACs Emitidas - Sistema APAC';
 ob_start();
 ?>
@@ -8,7 +10,7 @@ ob_start();
         <h1 class="text-3xl font-bold text-gray-800">APACs Emitidas</h1>
         <p class="text-gray-600">Listagem de todas as APACs emitidas</p>
     </div>
-    <a href="/apacs/create" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium">
+    <a href="<?= UrlHelper::url('/apacs/create') ?>" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium">
         Emitir Nova APAC
     </a>
 </div>
@@ -54,7 +56,7 @@ ob_start();
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <?php if (!$apac['impresso']): ?>
-                                <form method="POST" action="/apacs/<?= htmlspecialchars($apac['id']) ?>/imprimir" style="display: inline;">
+                                <form method="POST" action="<?= UrlHelper::url('/apacs/' . $apac['id'] . '/imprimir') ?>" style="display: inline;">
                                     <button type="submit" class="text-green-600 hover:text-green-900">Marcar Impressa</button>
                                 </form>
                             <?php else: ?>
