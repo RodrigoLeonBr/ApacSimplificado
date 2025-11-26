@@ -7,8 +7,49 @@ ob_start();
 
 <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-800">Emitir Nova APAC</h1>
-    <p class="text-gray-600">Selecione uma faixa para emitir uma nova APAC</p>
+    <p class="text-gray-600">
+        Emitir APAC para o Laudo #<?= htmlspecialchars($laudo['id'] ?? '') ?>
+    </p>
 </div>
+
+<?php if (isset($erro) && $erro): ?>
+<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 max-w-2xl" role="alert">
+    <p class="font-medium"><?= htmlspecialchars($erro) ?></p>
+    <?php if (isset($laudo) && $laudo): ?>
+        <p class="text-sm mt-2">
+            <a href="<?= UrlHelper::url('/laudos/' . $laudo['id']) ?>" class="underline">Voltar para o laudo</a>
+        </p>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if (isset($laudo) && $laudo && !isset($erro)): ?>
+<div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6 max-w-2xl">
+    <h2 class="text-lg font-bold text-gray-800 mb-4">Informações do Laudo</h2>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+            <p class="text-gray-600">Número do Laudo</p>
+            <p class="font-medium"><?= htmlspecialchars($laudo['numero_laudo'] ?? 'N/A') ?></p>
+        </div>
+        <div>
+            <p class="text-gray-600">Data do Laudo</p>
+            <p class="font-medium"><?= date('d/m/Y', strtotime($laudo['data_laudo'] ?? 'now')) ?></p>
+        </div>
+        <div class="col-span-2">
+            <p class="text-gray-600">Paciente</p>
+            <p class="font-medium"><?= htmlspecialchars($laudo['paciente_nome'] ?? 'N/A') ?></p>
+        </div>
+        <div>
+            <p class="text-gray-600">CID</p>
+            <p class="font-medium"><?= htmlspecialchars($laudo['cid_codigo'] ?? 'N/A') ?> - <?= htmlspecialchars($laudo['cid_descricao'] ?? '') ?></p>
+        </div>
+        <div>
+            <p class="text-gray-600">Procedimento</p>
+            <p class="font-medium"><?= htmlspecialchars($laudo['procedimento_descricao'] ?? 'N/A') ?></p>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl">
     <?php if (empty($faixas)): ?>
@@ -21,6 +62,7 @@ ob_start();
         </a>
     <?php else: ?>
         <form method="POST" action="<?= UrlHelper::url('/apacs') ?>">
+            <input type="hidden" name="laudo_id" value="<?= htmlspecialchars($laudo['id']) ?>">
             <div class="mb-6">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="faixa_id">
                     Selecione a Faixa
@@ -51,7 +93,7 @@ ob_start();
             </div>
             
             <div class="flex items-center justify-between">
-                <a href="<?= UrlHelper::url('/apacs') ?>" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                <a href="<?= UrlHelper::url('/laudos/' . $laudo['id']) ?>" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
                     Cancelar
                 </a>
                 <button 

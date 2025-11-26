@@ -82,6 +82,9 @@ ob_start();
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                     </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        APAC
+                    </th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Ações
                     </th>
@@ -90,7 +93,7 @@ ob_start();
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($laudos)): ?>
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                         <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
@@ -128,6 +131,15 @@ ob_start();
                                 <?= ucfirst($status) ?>
                             </span>
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <?php if (!empty($laudo['apac_numero'])): ?>
+                                <span class="text-green-600 font-medium">
+                                    <?= htmlspecialchars($laudo['apac_numero']) ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-gray-400">-</span>
+                            <?php endif; ?>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <a href="<?= UrlHelper::url('/laudos/' . $laudo['id']) ?>" class="text-blue-600 hover:text-blue-900 mr-3" title="Visualizar">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,12 +152,21 @@ ob_start();
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
                             </a>
-                            <?php if ($status !== 'autorizado'): ?>
+                            <?php 
+                            $temApac = !empty($laudo['apac_numero']);
+                            if ($status !== 'autorizado' && !$temApac): 
+                            ?>
                             <a href="<?= UrlHelper::url('/apacs/create?laudo_id=' . $laudo['id']) ?>" class="text-green-600 hover:text-green-900 mr-3" title="Emitir APAC">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                                 </svg>
                             </a>
+                            <?php elseif ($temApac): ?>
+                            <span class="text-gray-400 mr-3" title="APAC já emitida">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </span>
                             <?php endif; ?>
                             <button onclick="confirmarExclusao(<?= $laudo['id'] ?>)" class="text-red-600 hover:text-red-900" title="Excluir">
                                 <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,20 +218,41 @@ ob_start();
 
 <script>
 function confirmarExclusao(id) {
-    if (confirm('Tem certeza que deseja excluir este laudo?')) {
-        fetch(`/laudos/${id}/delete`, {
+    if (confirm('Tem certeza que deseja excluir este laudo? Esta ação não pode ser desfeita.')) {
+        const url = '<?= UrlHelper::url("/laudos") ?>/' + id + '/delete';
+        
+        fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
-            }
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Erro na requisição');
+                }).catch(() => {
+                    throw new Error('Erro ao processar resposta do servidor');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             if (data.success) {
+                alert('Laudo excluído com sucesso!');
                 window.location.reload();
             } else {
-                alert('Erro ao excluir laudo: ' + data.message);
+                alert('Erro ao excluir laudo: ' + (data.message || 'Erro desconhecido'));
             }
+        })
+        .catch(error => {
+            console.error('Erro completo:', error);
+            alert('Erro ao excluir laudo: ' + error.message);
         });
     }
 }
@@ -220,3 +262,4 @@ function confirmarExclusao(id) {
 $content = ob_get_clean();
 require VIEWS_PATH . '/layouts/app.php';
 ?>
+

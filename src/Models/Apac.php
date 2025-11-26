@@ -88,4 +88,22 @@ class Apac extends BaseModel
         $result = $this->db->fetchOne($sql);
         return $result['total'] ?? 0;
     }
+    
+    /**
+     * Busca APAC através do ID do laudo (via tabela apacs_laudos).
+     * 
+     * @param int $laudoId
+     * @return array|null Retorna a APAC vinculada ou null se não houver
+     */
+    public function findByLaudoId($laudoId)
+    {
+        $sql = "SELECT a.*, f.numero_inicial, f.numero_final, u.nome as emitido_por 
+                FROM {$this->table} a
+                INNER JOIN apacs_laudos al ON a.id = al.apac_id
+                LEFT JOIN faixas f ON a.faixa_id = f.id
+                LEFT JOIN usuarios u ON a.usuario_id = u.id
+                WHERE al.laudo_id = :laudo_id
+                LIMIT 1";
+        return $this->db->fetchOne($sql, ['laudo_id' => $laudoId]);
+    }
 }

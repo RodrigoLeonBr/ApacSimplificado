@@ -55,4 +55,27 @@ class Log extends BaseModel
         $result = $this->db->fetchOne($sql);
         return $result['total'] ?? 0;
     }
+    
+    /**
+     * Busca logs relacionados a uma tabela e registro específico.
+     * 
+     * @param string $tabela Nome da tabela
+     * @param int $registroId ID do registro
+     * @param int $limit Limite de resultados
+     * @return array Lista de logs
+     */
+    public function findByTabelaRegistro($tabela, $registroId, $limit = 10)
+    {
+        $limit = (int)$limit;
+        $sql = "SELECT l.*, u.nome as usuario_nome 
+                FROM {$this->table} l
+                LEFT JOIN usuarios u ON l.usuario_id = u.id
+                WHERE l.tabela = :tabela AND l.registro_id = :registro_id
+                ORDER BY l.criada_em DESC 
+                LIMIT {$limit}";
+        return $this->db->fetchAll($sql, [
+            'tabela' => $tabela,
+            'registro_id' => $registroId
+        ]);
+    }
 }

@@ -111,6 +111,11 @@ $router->post('/apacs', function() {
     $controller->store();
 });
 
+$router->get('/apacs/{id}/imprimir', function($id) {
+    $controller = new ApacController();
+    $controller->imprimir($id);
+});
+
 $router->post('/apacs/{id}/imprimir', function($id) {
     $controller = new ApacController();
     $controller->marcarImpresso($id);

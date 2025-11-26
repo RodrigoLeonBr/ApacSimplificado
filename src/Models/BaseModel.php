@@ -104,8 +104,8 @@ abstract class BaseModel
     {
         try {
             $sql = "DELETE FROM {$this->table} WHERE id = :id";
-            $this->db->execute($sql, ['id' => $id]);
-            return true;
+            $stmt = $this->db->execute($sql, ['id' => $id]);
+            return $stmt->rowCount() > 0;
         } catch (PDOException $e) {
             $this->tratarErro($e, 'delete');
             throw $e;
