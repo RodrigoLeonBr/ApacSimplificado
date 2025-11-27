@@ -13,6 +13,8 @@ use App\Controllers\ProfissionalController;
 use App\Controllers\CaraterAtendimentoController;
 use App\Controllers\LaudoController;
 use App\Controllers\ApiController;
+use App\Controllers\ImportacaoController;
+use App\Controllers\RelacionamentoProcedimentoCidController;
 
 $router = new Router();
 
@@ -463,6 +465,78 @@ $router->post('/carater/{id}/update', function($id) {
 $router->post('/carater/{id}/delete', function($id) {
     $controller = new CaraterAtendimentoController();
     $controller->delete($id);
+});
+
+// Rotas de Importação SIGTAP
+$router->get('/importacao', function() {
+    $controller = new ImportacaoController();
+    $controller->index();
+});
+
+$router->post('/importacao/cids', function() {
+    $controller = new ImportacaoController();
+    $controller->importarCids();
+});
+
+$router->post('/importacao/procedimentos', function() {
+    $controller = new ImportacaoController();
+    $controller->importarProcedimentos();
+});
+
+$router->post('/importacao/relacionamentos', function() {
+    $controller = new ImportacaoController();
+    $controller->importarRelacionamentos();
+});
+
+$router->post('/importacao/tudo', function() {
+    $controller = new ImportacaoController();
+    $controller->importarTudo();
+});
+
+$router->post('/importacao/upload', function() {
+    $controller = new ImportacaoController();
+    $controller->upload();
+});
+
+// Rotas de Relacionamento Procedimento x CID
+$router->get('/relacionamento', function() {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->index();
+});
+
+$router->get('/relacionamento/create', function() {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->create();
+});
+
+$router->post('/relacionamento', function() {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->store();
+});
+
+$router->get('/relacionamento/{id}', function($id) {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->show($id);
+});
+
+$router->get('/relacionamento/{id}/edit', function($id) {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->edit($id);
+});
+
+$router->post('/relacionamento/{id}/update', function($id) {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->update($id);
+});
+
+$router->post('/relacionamento/{id}/delete', function($id) {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->delete($id);
+});
+
+$router->get('/relacionamento/ajax/search', function() {
+    $controller = new RelacionamentoProcedimentoCidController();
+    $controller->ajax_search();
 });
 
 return $router;

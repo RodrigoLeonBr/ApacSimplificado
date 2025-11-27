@@ -20,8 +20,8 @@ function isMenuOpen($paths, $currentPath) {
 <aside x-data="{ 
     mobileMenuOpen: false,
     laudosOpen: <?= isMenuOpen(['/laudos', '/apacs'], $currentPath) ? 'true' : 'false' ?>,
-    cadastrosOpen: <?= isMenuOpen(['/pacientes', '/faixas', '/estabelecimentos', '/profissional', '/cid', '/procedimento', '/carater'], $currentPath) ? 'true' : 'false' ?>,
-    gerencialOpen: <?= isMenuOpen(['/relatorios', '/logs', '/usuarios'], $currentPath) ? 'true' : 'false' ?>,
+    cadastrosOpen: <?= isMenuOpen(['/pacientes', '/faixas', '/estabelecimentos', '/profissional', '/cid', '/procedimento', '/carater', '/relacionamento'], $currentPath) ? 'true' : 'false' ?>,
+    gerencialOpen: <?= isMenuOpen(['/importacao', '/relatorios', '/logs', '/usuarios'], $currentPath) ? 'true' : 'false' ?>,
     configOpen: <?= isMenuOpen(['/perfil', '/senha', '/preferencias'], $currentPath) ? 'true' : 'false' ?>
 }" class="w-64 bg-white shadow-lg min-h-screen hidden lg:block">
     <div class="p-6">
@@ -76,6 +76,7 @@ function isMenuOpen($paths, $currentPath) {
                     <a href="<?= UrlHelper::url('/cid') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/cid', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">CIDs</a>
                     <a href="<?= UrlHelper::url('/procedimento') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/procedimento', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Procedimentos</a>
                     <a href="<?= UrlHelper::url('/carater') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/carater', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Caráter de Atendimento</a>
+                    <a href="<?= UrlHelper::url('/relacionamento') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/relacionamento', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Relacionamentos</a>
                 </div>
             </div>
 
@@ -93,6 +94,7 @@ function isMenuOpen($paths, $currentPath) {
                     </svg>
                 </button>
                 <div x-show="gerencialOpen" x-collapse class="ml-8 mt-1 space-y-1">
+                    <a href="<?= UrlHelper::url('/importacao') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/importacao', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Importação SIGTAP</a>
                     <a href="<?= UrlHelper::url('/relatorios') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/relatorios', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Relatórios</a>
                     <a href="<?= UrlHelper::url('/logs') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/logs', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Logs de Atividade</a>
                     <a href="<?= UrlHelper::url('/usuarios') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/usuarios', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Usuários</a>
@@ -127,8 +129,8 @@ function isMenuOpen($paths, $currentPath) {
 <div x-data="{ 
     mobileMenuOpen: false,
     laudosOpen: <?= isMenuOpen(['/laudos', '/apacs'], $currentPath) ? 'true' : 'false' ?>,
-    cadastrosOpen: <?= isMenuOpen(['/pacientes', '/faixas', '/estabelecimentos', '/profissional', '/cid', '/procedimento', '/carater'], $currentPath) ? 'true' : 'false' ?>,
-    gerencialOpen: <?= isMenuOpen(['/relatorios', '/logs', '/usuarios'], $currentPath) ? 'true' : 'false' ?>,
+    cadastrosOpen: <?= isMenuOpen(['/pacientes', '/faixas', '/estabelecimentos', '/profissional', '/cid', '/procedimento', '/carater', '/relacionamento'], $currentPath) ? 'true' : 'false' ?>,
+    gerencialOpen: <?= isMenuOpen(['/importacao', '/relatorios', '/logs', '/usuarios'], $currentPath) ? 'true' : 'false' ?>,
     configOpen: <?= isMenuOpen(['/perfil', '/senha', '/preferencias'], $currentPath) ? 'true' : 'false' ?>
 }" class="lg:hidden">
     <!-- Mobile Menu Button -->
@@ -203,6 +205,7 @@ function isMenuOpen($paths, $currentPath) {
                         <a href="<?= UrlHelper::url('/cid') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/cid', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">CIDs</a>
                         <a href="<?= UrlHelper::url('/procedimento') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/procedimento', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Procedimentos</a>
                         <a href="<?= UrlHelper::url('/carater') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/carater', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Caráter de Atendimento</a>
+                        <a href="<?= UrlHelper::url('/relacionamento') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/relacionamento', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Relacionamentos</a>
                     </div>
                 </div>
 
@@ -220,7 +223,8 @@ function isMenuOpen($paths, $currentPath) {
                         </svg>
                     </button>
                     <div x-show="gerencialOpen" x-collapse class="ml-8 mt-1 space-y-1">
-                        <a href="<?= UrlHelper::url('/relatorios') ?>" class="block px-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Relatórios</a>
+                        <a href="<?= UrlHelper::url('/importacao') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/importacao', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Importação SIGTAP</a>
+                        <a href="<?= UrlHelper::url('/relatorios') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/relatorios', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Relatórios</a>
                         <a href="<?= UrlHelper::url('/logs') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/logs', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Logs de Atividade</a>
                         <a href="<?= UrlHelper::url('/usuarios') ?>" class="block px-4 py-2 text-sm rounded <?= isActive('/usuarios', $currentPath) ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' ?>">Usuários</a>
                     </div>

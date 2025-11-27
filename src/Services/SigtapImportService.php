@@ -60,10 +60,10 @@ class SigtapImportService
 
     /**
      * Converte valor monetário do formato SUS para decimal
-     * Formato SUS: 12 dígitos, últimos 2 são centavos
-     * Exemplo: 000000008415 = 8415.71 (84.1571 / 100)
+     * Formato SUS: 10 dígitos (formato 8,2 - 8 inteiros + 2 decimais)
+     * Exemplo: 0000841571 = 8415.71 (841571 / 100)
      * 
-     * @param string $valor Valor no formato SUS (12 dígitos)
+     * @param string $valor Valor no formato SUS (10 dígitos)
      * @return float Valor decimal
      */
     private function converterValorMonetario($valor)
@@ -79,13 +79,13 @@ class SigtapImportService
     /**
      * Importa CIDs do arquivo tb_cid.txt
      * 
-     * Layout estimado:
-     * - Posição 1-4: Código CID (4 caracteres)
-     * - Posição 5-104: Descrição (100 caracteres)
-     * - Posição 105: tp_agravo (1 caractere)
-     * - Posição 106: tp_sexo (1 caractere)
-     * - Posição 107: tp_estadio (1 caractere)
-     * - Posição 108-111: vl_campos_irradiados (4 caracteres numéricos)
+     * Layout oficial SIGTAP:
+     * - Posição 1-4: CO_CID (4 caracteres)
+     * - Posição 5-104: NO_CID (100 caracteres)
+     * - Posição 105: TP_AGRAVO (1 caractere)
+     * - Posição 106: TP_SEXO (1 caractere)
+     * - Posição 107: TP_ESTADIO (1 caractere)
+     * - Posição 108-111: VL_CAMPOS_IRRADIADOS (4 caracteres numéricos)
      */
     public function importarCids($arquivo)
     {
@@ -123,16 +123,25 @@ class SigtapImportService
                 }
 
                 try {
-                    $codigo = $this->extrairCampo($line, 1, 4);
+                    // Layout oficial SIGTAP: CO_CID (1-4), NO_CID (5-104), TP_AGRAVO (105), TP_SEXO (106), TP_ESTADIO (107), VL_CAMPOS_IRRADIADOS (108-111)
+                    $tamanhoLinha = strlen($line);
+                    if ($tamanhoLinha < 4) {
+                        continue; // Linha muito curta
+                    }
+                    
+                    $codigo = trim(substr($line, 0, 4));
                     if (empty($codigo)) {
                         continue;
                     }
 
-                    $descricao = $this->extrairCampo($line, 5, 100);
-                    $tp_agravo = $this->extrairCampo($line, 105, 1);
-                    $tp_sexo = $this->extrairCampo($line, 106, 1);
-                    $tp_estadio = $this->extrairCampo($line, 107, 1);
-                    $vl_campos_irradiados = (int)$this->extrairCampo($line, 108, 4);
+                    // Descrição: posição 5-104 (100 caracteres)
+                    $descricao = $this->limparTexto(substr($line, 4, 100));
+                    
+                    // Campos finais conforme layout oficial
+                    $tp_agravo = $tamanhoLinha >= 105 ? trim(substr($line, 104, 1)) : null;
+                    $tp_sexo = $tamanhoLinha >= 106 ? trim(substr($line, 105, 1)) : null;
+                    $tp_estadio = $tamanhoLinha >= 107 ? trim(substr($line, 106, 1)) : null;
+                    $vl_campos_irradiados = $tamanhoLinha >= 111 ? (int)trim(substr($line, 107, 4)) : 0;
 
                     // Verifica se é atualização ou inserção
                     $existe = $this->db->fetchOne(
@@ -188,16 +197,22 @@ class SigtapImportService
     /**
      * Importa Procedimentos do arquivo tb_procedimento.txt
      * 
-     * Layout estimado:
-     * - Posição 1-10: Código Procedimento (10 caracteres)
-     * - Posição 11-260: Descrição (250 caracteres)
-     * - Posição 261: tp_complexidade (1 caractere)
-     * - Posição 262: tp_sexo (1 caractere)
-     * - Posição 263-266: qt_maxima_execucao (4 caracteres)
-     * - Posição 283-294: vl_sh (12 caracteres monetários)
-     * - Posição 295-306: vl_sa (12 caracteres monetários)
-     * - Posição 307-318: vl_sp (12 caracteres monetários)
-     * - Posição 331-336: dt_competencia (6 caracteres)
+     * Layout oficial SIGTAP:
+     * - Posição 1-10: CO_PROCEDIMENTO (10 caracteres)
+     * - Posição 11-260: NO_PROCEDIMENTO (250 caracteres)
+     * - Posição 261: TP_COMPLEXIDADE (1 caractere)
+     * - Posição 262: TP_SEXO (1 caractere)
+     * - Posição 263-266: QT_MAXIMA_EXECUCAO (4 caracteres)
+     * - Posição 267-270: QT_DIAS_PERMANENCIA (4 caracteres) - não usado no banco
+     * - Posição 271-274: QT_PONTOS (4 caracteres) - não usado no banco
+     * - Posição 275-278: VL_IDADE_MINIMA (4 caracteres) - não usado no banco
+     * - Posição 279-282: VL_IDADE_MAXIMA (4 caracteres) - não usado no banco
+     * - Posição 283-292: VL_SH (10 caracteres monetários - formato 8,2)
+     * - Posição 293-302: VL_SA (10 caracteres monetários - formato 8,2)
+     * - Posição 303-312: VL_SP (10 caracteres monetários - formato 8,2)
+     * - Posição 313-314: CO_FINANCIAMENTO (2 caracteres) - não usado no banco
+     * - Posição 315-320: CO_RUBRICA (6 caracteres) - não usado no banco
+     * - Posição 321-326: DT_COMPETENCIA (6 caracteres - formato YYYYMM)
      */
     public function importarProcedimentos($arquivo)
     {
@@ -243,19 +258,44 @@ class SigtapImportService
                 }
 
                 try {
-                    $codigo = $this->extrairCampo($line, 1, 10);
+                    $codigo = trim(substr($line, 0, 10));
                     if (empty($codigo)) {
                         continue;
                     }
 
-                    $descricao = $this->extrairCampo($line, 11, 250);
-                    $tp_complexidade = $this->extrairCampo($line, 261, 1);
-                    $tp_sexo = $this->extrairCampo($line, 262, 1);
-                    $qt_maxima_execucao = (int)$this->extrairCampo($line, 263, 4);
-                    $vl_sh = $this->converterValorMonetario($this->extrairCampo($line, 283, 12));
-                    $vl_sa = $this->converterValorMonetario($this->extrairCampo($line, 295, 12));
-                    $vl_sp = $this->converterValorMonetario($this->extrairCampo($line, 307, 12));
-                    $dt_competencia = $this->extrairCampo($line, 331, 6);
+                    $tamanhoLinha = strlen($line);
+                    
+                    // Layout oficial SIGTAP:
+                    // CO_PROCEDIMENTO (1-10), NO_PROCEDIMENTO (11-260), TP_COMPLEXIDADE (261), TP_SEXO (262)
+                    // QT_MAXIMA_EXECUCAO (263-266), VL_SH (283-292), VL_SA (293-302), VL_SP (303-312), DT_COMPETENCIA (321-326)
+                    
+                    // Descrição: posição 11-260 (250 caracteres)
+                    $descricao = $this->limparTexto(substr($line, 10, 250));
+                    
+                    // Campos posicionais conforme layout oficial SIGTAP
+                    $tp_complexidade = $tamanhoLinha >= 261 ? trim(substr($line, 260, 1)) : null;
+                    $tp_sexo = $tamanhoLinha >= 262 ? trim(substr($line, 261, 1)) : null;
+                    $qt_maxima_execucao = $tamanhoLinha >= 266 ? (int)trim(substr($line, 262, 4)) : 1;
+                    
+                    // Valores monetários: formato 8,2 (10 caracteres, últimos 2 são decimais)
+                    $vl_sh = $tamanhoLinha >= 292 ? $this->converterValorMonetario(trim(substr($line, 282, 10))) : 0.00;
+                    $vl_sa = $tamanhoLinha >= 302 ? $this->converterValorMonetario(trim(substr($line, 292, 10))) : 0.00;
+                    $vl_sp = $tamanhoLinha >= 312 ? $this->converterValorMonetario(trim(substr($line, 302, 10))) : 0.00;
+                    
+                    // DT_COMPETENCIA: posição 321-326 (formato YYYYMM)
+                    // Nota: Alguns arquivos podem ter a competência no final (últimos 6 caracteres)
+                    if ($tamanhoLinha >= 326) {
+                        $dt_competencia = trim(substr($line, 320, 6));
+                        // Se estiver vazio, tenta pegar do final
+                        if (empty($dt_competencia) && $tamanhoLinha >= 6) {
+                            $dt_competencia = trim(substr($line, -6));
+                        }
+                    } elseif ($tamanhoLinha >= 6) {
+                        // Se a linha for menor, pega os últimos 6 caracteres
+                        $dt_competencia = trim(substr($line, -6));
+                    } else {
+                        $dt_competencia = null;
+                    }
 
                     // Valores padrão
                     if ($qt_maxima_execucao <= 0) {
@@ -319,11 +359,11 @@ class SigtapImportService
     /**
      * Importa relacionamentos Procedimento x CID do arquivo rl_procedimento_cid.txt
      * 
-     * Layout estimado:
-     * - Posição 1-10: co_procedimento (10 caracteres)
-     * - Posição 11-14: co_cid (4 caracteres)
-     * - Posição 15: st_principal (1 caractere) - S ou espaço
-     * - Posição 16-21: dt_competencia (6 caracteres)
+     * Layout oficial SIGTAP:
+     * - Posição 1-10: CO_PROCEDIMENTO (10 caracteres)
+     * - Posição 11-14: CO_CID (4 caracteres)
+     * - Posição 15: ST_PRINCIPAL (1 caractere) - S ou N
+     * - Posição 16-21: DT_COMPETENCIA (6 caracteres - formato YYYYMM)
      */
     public function importarRelacionamentos($arquivo)
     {
@@ -358,22 +398,31 @@ class SigtapImportService
                 }
 
                 try {
-                    $co_procedimento = $this->extrairCampo($line, 1, 10);
-                    $co_cid = $this->extrairCampo($line, 11, 4);
+                    // Layout: 10 chars procedimento + 4 chars CID + 1 char principal + 6 chars competência = 21 chars
+                    // Exemplo: "0201010038C73 S202511"
+                    $co_procedimento = trim(substr($line, 0, 10));
+                    $co_cid = trim(substr($line, 10, 4));
                     
                     if (empty($co_procedimento) || empty($co_cid)) {
                         continue;
                     }
 
-                    $st_principal = $this->extrairCampo($line, 15, 1);
-                    $dt_competencia = $this->extrairCampo($line, 16, 6);
-
-                    // Normaliza st_principal: S ou espaço vira 'S', caso contrário 'N'
-                    if (strtoupper($st_principal) === 'S') {
+                    // Layout oficial SIGTAP: CO_PROCEDIMENTO (1-10), CO_CID (11-14), ST_PRINCIPAL (15), DT_COMPETENCIA (16-21)
+                    $tamanhoLinha = strlen($line);
+                    if ($tamanhoLinha < 15) {
+                        continue; // Linha muito curta
+                    }
+                    
+                    $st_principal = trim(substr($line, 14, 1));
+                    // Normaliza: S ou espaço vira 'S', caso contrário 'N'
+                    if (strtoupper($st_principal) === 'S' || $st_principal === ' ') {
                         $st_principal = 'S';
                     } else {
                         $st_principal = 'N';
                     }
+                    
+                    // DT_COMPETENCIA: posição 16-21 (formato YYYYMM)
+                    $dt_competencia = $tamanhoLinha >= 21 ? trim(substr($line, 15, 6)) : null;
 
                     // Validação: verifica se procedimento e CID existem
                     $procExiste = $this->db->fetchOne(

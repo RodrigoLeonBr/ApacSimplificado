@@ -204,7 +204,7 @@ class ProcedimentoController extends BaseController
         
         $q = $_GET['q'] ?? '';
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $limit = 10;
+        $limit = max(10, min(100, (int) ($_GET['limit'] ?? 10))); // Aceita 10, 20, 50 ou 100
         $offset = ($page - 1) * $limit;
         
         if (strlen($q) === 0) {
@@ -227,16 +227,87 @@ class ProcedimentoController extends BaseController
         ]);
     }
     
+    /**
+     * Lista relacionamentos (CIDs) de um procedimento
+     */
+    public function relacionamentos($id)
+    {
+        AuthMiddleware::handle();
+        
+        $procedimento = $this->procedimentoModel->findById($id);
+        
+        if (!$procedimento) {
+            $this->flash('Procedimento não encontrado', 'error');
+            $this->redirect('/procedimento');
+        }
+        
+        $relacionamentos = $this->procedimentoModel->findRelacionamentosCid($id);
+        
+        $this->render('procedimento/relacionamentos', [
+            'procedimento' => $procedimento,
+            'relacionamentos' => $relacionamentos,
+            'flash' => $this->getFlash()
+        ]);
+    }
+    
     private function validateProcedimento($data)
     {
         $errors = [];
         
         if (empty($data['codigo_procedimento'])) {
             $errors['codigo_procedimento'] = 'Código do procedimento é obrigatório';
+        } elseif (strlen($data['codigo_procedimento']) > 10) {
+            $errors['codigo_procedimento'] = 'Código do procedimento deve ter no máximo 10 caracteres';
         }
         
         if (empty($data['descricao'])) {
             $errors['descricao'] = 'Descrição é obrigatória';
+        }
+        
+        // Validações SIGTAP
+        if (isset($data['tp_complexidade']) && $data['tp_complexidade'] !== '') {
+            $complexidadesValidas = ['0', '1', '2', '3'];
+            if (!in_array($data['tp_complexidade'], $complexidadesValidas)) {
+                $errors['tp_complexidade'] = 'Tipo de complexidade inválido. Use: 0, 1, 2 ou 3';
+            }
+        }
+        
+        if (isset($data['tp_sexo']) && $data['tp_sexo'] !== '') {
+            $sexosValidos = ['M', 'F', 'I', 'N'];
+            if (!in_array($data['tp_sexo'], $sexosValidos)) {
+                $errors['tp_sexo'] = 'Tipo de sexo inválido. Use: M, F, I ou N';
+            }
+        }
+        
+        if (isset($data['qt_maxima_execucao']) && $data['qt_maxima_execucao'] !== '') {
+            $qtMaxima = (int)$data['qt_maxima_execucao'];
+            if ($qtMaxima < 0) {
+                $errors['qt_maxima_execucao'] = 'Quantidade máxima de execução deve ser um número positivo';
+            }
+        }
+        
+        // Validações de valores monetários
+        $camposMonetarios = ['vl_sh', 'vl_sa', 'vl_sp'];
+        foreach ($camposMonetarios as $campo) {
+            if (isset($data[$campo]) && $data[$campo] !== '') {
+                $valor = (float)$data[$campo];
+                if ($valor < 0) {
+                    $errors[$campo] = 'Valor não pode ser negativo';
+                }
+            }
+        }
+        
+        // Validação de dt_competencia (formato YYYYMM)
+        if (isset($data['dt_competencia']) && $data['dt_competencia'] !== '') {
+            if (!preg_match('/^\d{6}$/', $data['dt_competencia'])) {
+                $errors['dt_competencia'] = 'Data de competência deve estar no formato YYYYMM (ex: 202511)';
+            } else {
+                $ano = substr($data['dt_competencia'], 0, 4);
+                $mes = substr($data['dt_competencia'], 4, 2);
+                if ($ano < 2000 || $ano > 2100 || $mes < 1 || $mes > 12) {
+                    $errors['dt_competencia'] = 'Data de competência inválida';
+                }
+            }
         }
         
         return $errors;

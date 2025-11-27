@@ -106,7 +106,8 @@ class Router
     
     private function convertToRegex($path)
     {
-        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([a-zA-Z0-9_-]+)', $path);
+        // Aceita caracteres alfanuméricos, underscore, hífen e caracteres URL-encoded (para chaves base64)
+        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([a-zA-Z0-9_%+-]+)', $path);
         return '#^' . $pattern . '$#';
     }
     

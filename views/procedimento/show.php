@@ -54,6 +54,114 @@ function formatarData($data) {
                 </div>
             </div>
         </div>
+        
+        <!-- Informações SIGTAP -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Informações SIGTAP</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Tipo de Complexidade</label>
+                    <p class="text-gray-900">
+                        <?php
+                        $complexidade = $procedimento['tp_complexidade'] ?? '';
+                        $complexidades = ['0' => 'Não se aplica', '1' => 'Atenção Básica', '2' => 'Média Complexidade', '3' => 'Alta Complexidade'];
+                        echo htmlspecialchars($complexidade !== '' ? ($complexidade . ' - ' . ($complexidades[$complexidade] ?? '')) : '-');
+                        ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Tipo de Sexo</label>
+                    <p class="text-gray-900">
+                        <?php
+                        $sexo = $procedimento['tp_sexo'] ?? '';
+                        $sexos = ['M' => 'Masculino', 'F' => 'Feminino', 'I' => 'Indiferente/Ambos', 'N' => 'Não se aplica'];
+                        echo htmlspecialchars($sexo !== '' ? ($sexo . ' - ' . ($sexos[$sexo] ?? '')) : '-');
+                        ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Quantidade Máxima de Execução</label>
+                    <p class="text-gray-900"><?= htmlspecialchars($procedimento['qt_maxima_execucao'] ?? '-') ?></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Data de Competência</label>
+                    <p class="text-gray-900">
+                        <?php
+                        $dt = $procedimento['dt_competencia'] ?? '';
+                        if ($dt && strlen($dt) === 6) {
+                            echo htmlspecialchars(substr($dt, 4, 2) . '/' . substr($dt, 0, 4));
+                        } else {
+                            echo '-';
+                        }
+                        ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Valor SH (Serviço Hospitalar)</label>
+                    <p class="text-gray-900 font-medium">
+                        R$ <?= isset($procedimento['vl_sh']) && $procedimento['vl_sh'] !== null ? number_format($procedimento['vl_sh'], 2, ',', '.') : '0,00' ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Valor SA (Serviço Ambulatorial)</label>
+                    <p class="text-gray-900 font-medium">
+                        R$ <?= isset($procedimento['vl_sa']) && $procedimento['vl_sa'] !== null ? number_format($procedimento['vl_sa'], 2, ',', '.') : '0,00' ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Valor SP (Serviço Profissional)</label>
+                    <p class="text-gray-900 font-medium">
+                        R$ <?= isset($procedimento['vl_sp']) && $procedimento['vl_sp'] !== null ? number_format($procedimento['vl_sp'], 2, ',', '.') : '0,00' ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relacionamentos com CIDs -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">CIDs Relacionados</h2>
+                <a href="<?= UrlHelper::url('/relacionamento/create?procedimento_id=' . $procedimento['id']) ?>" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                    + Adicionar CID
+                </a>
+            </div>
+            <?php
+            $procedimentoModel = new \App\Models\Procedimento();
+            $relacionamentos = $procedimentoModel->findRelacionamentosCid($procedimento['id']);
+            if (empty($relacionamentos)):
+            ?>
+                <p class="text-gray-500 text-sm">Nenhum CID relacionado encontrado.</p>
+            <?php else: ?>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">CID</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($relacionamentos as $rel): ?>
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900"><?= htmlspecialchars($rel['cid_codigo']) ?></td>
+                                <td class="px-4 py-3 text-sm text-gray-600"><?= htmlspecialchars(substr($rel['cid_descricao'], 0, 50)) ?>...</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <span class="px-2 py-1 text-xs rounded-full <?= $rel['st_principal'] === 'S' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' ?>">
+                                        <?= $rel['st_principal'] === 'S' ? 'Sim' : 'Não' ?>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    <a href="<?= UrlHelper::url('/relacionamento/' . $rel['id']) ?>" class="text-blue-600 hover:text-blue-800">Ver</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Sidebar de Ações -->

@@ -204,7 +204,7 @@ class CidController extends BaseController
         
         $q = $_GET['q'] ?? '';
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $limit = 10;
+        $limit = max(10, min(100, (int) ($_GET['limit'] ?? 10))); // Aceita 10, 20, 50 ou 100
         $offset = ($page - 1) * $limit;
         
         if (strlen($q) === 0) {
@@ -227,16 +227,70 @@ class CidController extends BaseController
         ]);
     }
     
+    /**
+     * Lista relacionamentos (Procedimentos) de um CID
+     */
+    public function relacionamentos($id)
+    {
+        AuthMiddleware::handle();
+        
+        $cid = $this->cidModel->findById($id);
+        
+        if (!$cid) {
+            $this->flash('CID não encontrado', 'error');
+            $this->redirect('/cid');
+        }
+        
+        $relacionamentos = $this->cidModel->findRelacionamentosProcedimento($id);
+        
+        $this->render('cid/relacionamentos', [
+            'cid' => $cid,
+            'relacionamentos' => $relacionamentos,
+            'flash' => $this->getFlash()
+        ]);
+    }
+    
     private function validateCid($data)
     {
         $errors = [];
         
         if (empty($data['codigo'])) {
             $errors['codigo'] = 'Código é obrigatório';
+        } elseif (strlen($data['codigo']) > 10) {
+            $errors['codigo'] = 'Código deve ter no máximo 10 caracteres';
         }
         
         if (empty($data['descricao'])) {
             $errors['descricao'] = 'Descrição é obrigatória';
+        }
+        
+        // Validações SIGTAP
+        if (isset($data['tp_agravo']) && $data['tp_agravo'] !== '') {
+            $agravosValidos = ['0', '1', '2'];
+            if (!in_array($data['tp_agravo'], $agravosValidos)) {
+                $errors['tp_agravo'] = 'Tipo de agravo inválido. Use: 0, 1 ou 2';
+            }
+        }
+        
+        if (isset($data['tp_sexo']) && $data['tp_sexo'] !== '') {
+            $sexosValidos = ['M', 'F', 'I'];
+            if (!in_array($data['tp_sexo'], $sexosValidos)) {
+                $errors['tp_sexo'] = 'Tipo de sexo inválido. Use: M, F ou I';
+            }
+        }
+        
+        if (isset($data['tp_estadio']) && $data['tp_estadio'] !== '') {
+            $estadiosValidos = ['S', 'N'];
+            if (!in_array($data['tp_estadio'], $estadiosValidos)) {
+                $errors['tp_estadio'] = 'Tipo de estádio inválido. Use: S ou N';
+            }
+        }
+        
+        if (isset($data['vl_campos_irradiados']) && $data['vl_campos_irradiados'] !== '') {
+            $vlCampos = (int)$data['vl_campos_irradiados'];
+            if ($vlCampos < 0) {
+                $errors['vl_campos_irradiados'] = 'Valor de campos irradiados deve ser um número positivo';
+            }
         }
         
         return $errors;

@@ -49,12 +49,12 @@ ob_start();
 
     <!-- Tabela de CIDs -->
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
+        <table class="min-w-full divide-y divide-gray-200 table-fixed">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    <th class="w-24 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                    <th class="w-64 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                    <th class="w-32 px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -83,9 +83,11 @@ ob_start();
                 <template x-if="!loading && cids.length > 0">
                     <template x-for="cid in cids" :key="cid.id">
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="cid.codigo"></td>
-                            <td class="px-6 py-4 text-sm text-gray-900" x-text="cid.descricao"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <td class="px-2 py-2 whitespace-nowrap text-sm font-medium text-gray-900" x-text="cid.codigo"></td>
+                            <td class="px-2 py-2 text-sm text-gray-900">
+                                <div class="max-w-xs truncate" :title="cid.descricao" x-text="cid.descricao"></div>
+                            </td>
+                            <td class="px-2 py-2 whitespace-nowrap text-right text-sm font-medium">
                                 <a :href="'<?= UrlHelper::url('/cid/') ?>' + cid.id" class="text-blue-600 hover:text-blue-900 mr-3">Ver</a>
                                 <a :href="'<?= UrlHelper::url('/cid/') ?>' + cid.id + '/edit'" class="text-green-600 hover:text-green-900 mr-3">Editar</a>
                                 <button @click="confirmarExclusao(cid.id)" class="text-red-600 hover:text-red-900">Excluir</button>
@@ -116,45 +118,93 @@ ob_start();
             </button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
+            <div class="flex items-center gap-4">
                 <p class="text-sm text-gray-700">
                     Mostrando 
-                    <span class="font-medium" x-text="cids.length > 0 ? ((currentPage - 1) * 10 + 1) : 0"></span>
+                    <span class="font-medium" x-text="cids.length > 0 ? ((currentPage - 1) * perPage + 1) : 0"></span>
                     a 
-                    <span class="font-medium" x-text="Math.min(currentPage * 10, totalCids)"></span>
+                    <span class="font-medium" x-text="Math.min(currentPage * perPage, totalCids)"></span>
                     de 
                     <span class="font-medium" x-text="totalCids"></span>
                     CIDs
                 </p>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-700">Registros por página:</label>
+                    <select 
+                        x-model="perPage"
+                        @change="alterarRegistrosPorPagina()"
+                        class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
             </div>
             <div>
                 <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    <!-- Botão Primeiro -->
+                    <button 
+                        @click="carregarPagina(1)"
+                        :disabled="currentPage === 1"
+                        :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        title="Primeira página">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botão Anterior -->
                     <button 
                         @click="carregarPagina(currentPage - 1)"
                         :disabled="currentPage === 1"
                         :class="currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
-                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500">
+                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        title="Página anterior">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
                         </svg>
                     </button>
                     
-                    <template x-for="page in getPagesArray()" :key="page">
-                        <button
-                            @click="carregarPagina(page)"
-                            :class="page === currentPage ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
-                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                            x-text="page">
-                        </button>
+                    <!-- Páginas -->
+                    <template x-for="(item, index) in getPagesArray()" :key="index">
+                        <template x-if="item === '...'">
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                ...
+                            </span>
+                        </template>
+                        <template x-if="item !== '...'">
+                            <button
+                                @click="carregarPagina(item)"
+                                :class="item === currentPage ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'"
+                                class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                x-text="item">
+                            </button>
+                        </template>
                     </template>
                     
+                    <!-- Botão Próximo -->
                     <button 
                         @click="carregarPagina(currentPage + 1)"
                         :disabled="currentPage === totalPages"
                         :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
-                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500">
+                        class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        title="Próxima página">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Botão Último -->
+                    <button 
+                        @click="carregarPagina(totalPages)"
+                        :disabled="currentPage === totalPages"
+                        :class="currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'"
+                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        title="Última página">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 11H2a1 1 0 110-2h6.586l-4.293-4.293a1 1 0 011.414-1.414l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0zm6 0a1 1 0 010-1.414L14.586 11H8a1 1 0 110-2h6.586l-4.293-4.293a1 1 0 111.414-1.414l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                         </svg>
                     </button>
                 </nav>
@@ -172,15 +222,23 @@ document.addEventListener('alpine:init', () => {
         totalCids: 0,
         currentPage: 1,
         totalPages: 1,
+        perPage: 10,
         init() {
-            this.cids = <?= json_encode($cids ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
-            this.totalCids = <?= $totalCids ?? 0 ?>;
-            this.currentPage = <?= $currentPage ?? 1 ?>;
-            this.totalPages = <?= $totalPages ?? 1 ?>;
+            this.perPage = parseInt(localStorage.getItem('cid_perPage')) || 10;
+            // Se o perPage do localStorage for diferente de 10, recarrega os dados
+            if (this.perPage !== 10) {
+                this.buscarCids();
+            } else {
+                this.cids = <?= json_encode($cids ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+                this.totalCids = <?= $totalCids ?? 0 ?>;
+                this.currentPage = <?= $currentPage ?? 1 ?>;
+                this.totalPages = <?= $totalPages ?? 1 ?>;
+            }
         },
         buscarCids() {
             this.loading = true;
-            fetch('<?= UrlHelper::url('/cid/ajax/search') ?>?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage)
+            localStorage.setItem('cid_perPage', this.perPage);
+            fetch('<?= UrlHelper::url('/cid/ajax/search') ?>?q=' + encodeURIComponent(this.searchTerm) + '&page=' + this.currentPage + '&limit=' + this.perPage)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -225,10 +283,39 @@ document.addEventListener('alpine:init', () => {
         },
         getPagesArray() {
             const pages = [];
-            for (let i = 1; i <= this.totalPages; i++) {
-                pages.push(i);
+            const current = this.currentPage;
+            const total = this.totalPages;
+            
+            if (total <= 5) {
+                // Se tem 5 ou menos páginas, mostra todas
+                for (let i = 1; i <= total; i++) {
+                    pages.push(i);
+                }
+            } else {
+                // Mostra apenas 2-3 páginas entre Anterior e Próximo
+                if (current <= 2) {
+                    // Primeiras páginas: mostra 1, 2, 3
+                    pages.push(1);
+                    pages.push(2);
+                    if (total >= 3) pages.push(3);
+                } else if (current >= total - 1) {
+                    // Últimas páginas: mostra total-2, total-1, total
+                    if (total >= 3) pages.push(total - 2);
+                    pages.push(total - 1);
+                    pages.push(total);
+                } else {
+                    // Páginas do meio: mostra current-1, current, current+1
+                    pages.push(current - 1);
+                    pages.push(current);
+                    pages.push(current + 1);
+                }
             }
+            
             return pages;
+        },
+        alterarRegistrosPorPagina() {
+            this.currentPage = 1;
+            this.buscarCids();
         }
     }));
 });

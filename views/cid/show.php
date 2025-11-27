@@ -50,6 +50,93 @@ function formatarData($data) {
                 </div>
             </div>
         </div>
+        
+        <!-- Informações SIGTAP -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Informações SIGTAP</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Tipo de Agravo</label>
+                    <p class="text-gray-900">
+                        <?php
+                        $agravo = $cid['tp_agravo'] ?? '';
+                        $agravos = ['0' => 'Sem Agravo', '1' => 'Agravo de notificação', '2' => 'Agravo de bloqueio'];
+                        echo htmlspecialchars($agravo !== '' ? ($agravo . ' - ' . ($agravos[$agravo] ?? '')) : '-');
+                        ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Tipo de Sexo</label>
+                    <p class="text-gray-900">
+                        <?php
+                        $sexo = $cid['tp_sexo'] ?? '';
+                        $sexos = ['M' => 'Masculino', 'F' => 'Feminino', 'I' => 'Indiferente/Ambos'];
+                        echo htmlspecialchars($sexo !== '' ? ($sexo . ' - ' . ($sexos[$sexo] ?? '')) : '-');
+                        ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Tipo de Estádio</label>
+                    <p class="text-gray-900">
+                        <?php
+                        $estadio = $cid['tp_estadio'] ?? '';
+                        $estadios = ['S' => 'Sim', 'N' => 'Não'];
+                        echo htmlspecialchars($estadio !== '' ? ($estadio . ' - ' . ($estadios[$estadio] ?? '')) : '-');
+                        ?>
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-500">Valor Campos Irradiados</label>
+                    <p class="text-gray-900"><?= htmlspecialchars($cid['vl_campos_irradiados'] ?? '0') ?></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Relacionamentos com Procedimentos -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Procedimentos Relacionados</h2>
+                <a href="<?= UrlHelper::url('/relacionamento/create?cid_id=' . $cid['id']) ?>" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                    + Adicionar Procedimento
+                </a>
+            </div>
+            <?php
+            $cidModel = new \App\Models\Cid();
+            $relacionamentos = $cidModel->findRelacionamentosProcedimento($cid['id']);
+            if (empty($relacionamentos)):
+            ?>
+                <p class="text-gray-500 text-sm">Nenhum procedimento relacionado encontrado.</p>
+            <?php else: ?>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Principal</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($relacionamentos as $rel): ?>
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900"><?= htmlspecialchars($rel['codigo_procedimento']) ?></td>
+                                <td class="px-4 py-3 text-sm text-gray-600"><?= htmlspecialchars(substr($rel['procedimento_descricao'], 0, 50)) ?>...</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <span class="px-2 py-1 text-xs rounded-full <?= $rel['st_principal'] === 'S' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' ?>">
+                                        <?= $rel['st_principal'] === 'S' ? 'Sim' : 'Não' ?>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    <a href="<?= UrlHelper::url('/relacionamento/' . $rel['id']) ?>" class="text-blue-600 hover:text-blue-800">Ver</a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- Sidebar de Ações -->
